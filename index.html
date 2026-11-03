@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Música</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="logo">♪</span> Música</div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="home">Inicio</button>
+        <button class="nav-item" data-view="favorites">Favoritos</button>
+        <button class="nav-item" data-view="queue">Cola</button>
+      </nav>
+      <div class="sidebar-section">
+        <h4>Fuente</h4>
+        <div id="providers" class="providers"></div>
+      </div>
+      <button id="settingsBtn" class="settings-btn">⚙ Ajustes</button>
+    </aside>
+
+    <main class="main">
+      <form id="searchForm" class="search" role="search">
+        <input id="searchInput" type="search" placeholder="Busca canciones o artistas…" autocomplete="off">
+        <button type="submit">Buscar</button>
+      </form>
+      <div id="notice" class="notice" hidden></div>
+      <h2 id="viewTitle" class="view-title"></h2>
+      <div id="list" class="track-list"></div>
+    </main>
+  </div>
+
+  <div id="ytWrap" class="yt-wrap" hidden><div id="ytPlayer"></div></div>
+
+  <footer class="player">
+    <div class="now">
+      <img id="npCover" class="np-cover" alt="" hidden>
+      <div class="np-text">
+        <div id="npTitle" class="np-title">Nada sonando</div>
+        <div id="npArtist" class="np-artist"></div>
+      </div>
+      <button id="npFav" class="icon-btn" title="Añadir a favoritos" hidden>♡</button>
+    </div>
+    <div class="controls">
+      <div class="buttons">
+        <button id="shuffleBtn" class="icon-btn" title="Aleatorio">⤮</button>
+        <button id="prevBtn" class="icon-btn" title="Anterior">⏮&#xFE0E;</button>
+        <button id="playBtn" class="play-btn" title="Reproducir / pausar">▶&#xFE0E;</button>
+        <button id="nextBtn" class="icon-btn" title="Siguiente">⏭&#xFE0E;</button>
+        <button id="repeatBtn" class="icon-btn" title="Repetir">↻</button>
+      </div>
+      <div class="progress">
+        <span id="curTime">0:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Posición">
+        <span id="durTime">0:00</span>
+      </div>
+    </div>
+    <div class="volume">
+      <span aria-hidden="true">🔈&#xFE0E;</span>
+      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volumen">
+    </div>
+  </footer>
+
+  <dialog id="settings">
+    <form method="dialog" class="settings-form">
+      <h3>Ajustes</h3>
+
+      <section>
+        <h4>Deezer</h4>
+        <p class="hint">Funciona sin configuración. Reproduce vistas previas de 30 segundos.</p>
+      </section>
+
+      <section>
+        <h4>YouTube</h4>
+        <label>API key de YouTube Data API v3
+          <input id="ytKey" type="text" spellcheck="false" placeholder="AIza…">
+        </label>
+        <p class="hint">Canciones completas. Crea la clave gratis en
+          <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Google Cloud Console</a>.</p>
+      </section>
+
+      <section>
+        <h4>Spotify</h4>
+        <label>Client ID
+          <input id="spClientId" type="text" spellcheck="false" placeholder="Client ID de tu app">
+        </label>
+        <p class="hint">Crea una app en
+          <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">Spotify for Developers</a>
+          y añade como Redirect URI: <code id="redirectUri"></code><br>
+          Reproducir requiere cuenta <strong>Premium</strong>.</p>
+        <div class="btn-row">
+          <button type="button" id="spLogin">Conectar con Spotify</button>
+          <button type="button" id="spLogout" class="secondary">Desconectar</button>
+          <span id="spStatus" class="hint"></span>
+        </div>
+      </section>
+
+      <menu>
+        <button value="cancel" class="secondary">Cerrar</button>
+        <button value="save" id="saveSettings">Guardar</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

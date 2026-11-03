@@ -1,0 +1,323 @@
+import { store } from './storage.js';
+import { Player } from './player.js';
+import { deezer } from './providers/deezer.js';
+import { youtube } from './providers/youtube.js';
+import { spotify, login, logout, handleRedirect, redirectUri } from './providers/spotify.js';
+
+const providers = { deezer, youtube, spotify };
+const $ = (s) => document.querySelector(s);
+const player = new Player();
+
+let providerId = providers[store.get('provider')] ? store.get('provider') : 'deezer';
+let view = 'home';
+let shown = [];          // pistas mostradas en la lista actual
+let lastQuery = '';
+let favorites = store.get('favorites', []);
+let seeking = false;
+
+/* ---------- utilidades ---------- */
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function fmt(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 4000);
+}
+
+function notice(msg, withButton = false) {
+  const el = $('#notice');
+  el.hidden = !msg;
+  el.innerHTML = msg ? esc(msg) + (withButton ? ' <button type="button" class="link-btn" data-open-settings>Abrir ajustes</button>' : '') : '';
+}
+
+const isFav = (t) => favorites.some((f) => f.id === t.id);
+
+function toggleFav(t) {
+  favorites = isFav(t) ? favorites.filter((f) => f.id !== t.id) : [t, ...favorites];
+  store.set('favorites', favorites);
+  if (view === 'favorites') renderList(favorites);
+  else markRows();
+  updateNowFav();
+}
+
+/* ---------- fuentes ---------- */
+function renderProviders() {
+  $('#providers').innerHTML = Object.values(providers).map((p) => `
+    <button class="provider ${p.id === providerId ? 'active' : ''}" data-provider="${p.id}">
+      <span class="dot ${p.isReady() ? 'ok' : ''}"></span>
+      <span class="p-name">${esc(p.name)}</span>
+      <small>${esc(p.note)}</small>
+    </button>`).join('');
+}
+
+function selectProvider(id) {
+  providerId = id;
+  store.set('provider', id);
+  renderProviders();
+  if (lastQuery) search(lastQuery); else showView('home');
+}
+
+/* ---------- vistas ---------- */
+function setNav(v) {
+  document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
+}
+
+async function loadInto(title, fetcher) {
+  const p = providers[providerId];
+  $('#viewTitle').textContent = title;
+  if (!p.isReady()) {
+    notice(p.setupHint, true);
+    renderList([]);
+    return;
+  }
+  notice('');
+  $('#list').innerHTML = '<div class="empty">Cargando…</div>';
+  const token = Symbol();
+  loadInto.token = token;
+  try {
+    const tracks = await fetcher(p);
+    if (loadInto.token !== token) return;
+    renderList(tracks, { empty: 'No se encontraron canciones.' });
+  } catch (e) {
+    if (loadInto.token !== token) return;
+    renderList([]);
+    notice(e.message, /key|Ajustes|Client|token|autentic/i.test(e.message));
+  }
+}
+
+function showView(v) {
+  view = v;
+  setNav(v);
+  loadInto.token = null;
+  if (v === 'home') {
+    lastQuery = '';
+    $('#searchInput').value = '';
+    loadInto(`Lo más escuchado · ${providers[providerId].name}`, (p) => p.top());
+  } else if (v === 'favorites') {
+    notice('');
+    $('#viewTitle').textContent = 'Favoritos';
+    renderList(favorites, { empty: 'Aún no tienes favoritos. Pulsa ♡ en cualquier canción.' });
+  } else if (v === 'queue') {
+    notice('');
+    $('#viewTitle').textContent = 'Cola de reproducción';
+    renderList(player.queue, { queue: true, empty: 'La cola está vacía.' });
+  }
+}
+
+function search(q) {
+  lastQuery = q;
+  view = 'search';
+  setNav(null);
+  loadInto(`Resultados para “${q}” · ${providers[providerId].name}`, (p) => p.search(q));
+}
+
+/* ---------- lista de canciones ---------- */
+const badge = { deezer: 'DZ', youtube: 'YT', spotify: 'SP' };
+
+function renderList(tracks, opts = {}) {
+  shown = tracks;
+  const list = $('#list');
+  list.dataset.queue = opts.queue ? '1' : '';
+  if (!tracks.length) {
+    list.innerHTML = opts.empty ? `<div class="empty">${esc(opts.empty)}</div>` : '';
+    return;
+  }
+  list.innerHTML = tracks.map((t, i) => `
+    <div class="row" data-i="${i}" data-id="${esc(t.id)}">
+      <span class="num">${i + 1}</span>
+      ${t.cover ? `<img class="cover" src="${esc(t.cover)}" alt="" loading="lazy">` : '<span class="cover"></span>'}
+      <div class="meta">
+        <div class="title">${esc(t.title)}</div>
+        <div class="artist">${esc(t.artist)}</div>
+      </div>
+      <div class="album">${esc(t.album)}</div>
+      <span class="badge ${t.provider}" title="${esc(providers[t.provider].name)}">${badge[t.provider]}</span>
+      <button class="icon-btn fav" data-act="fav" title="Favorito">♡</button>
+      <button class="icon-btn" data-act="${opts.queue ? 'remove' : 'enqueue'}" title="${opts.queue ? 'Quitar de la cola' : 'Añadir a la cola'}">${opts.queue ? '✕' : '+'}</button>
+      <span class="dur">${t.duration ? fmt(t.duration) : ''}</span>
+    </div>`).join('');
+  markRows();
+}
+
+function markRows() {
+  const cur = player.track;
+  const inQueue = $('#list').dataset.queue === '1';
+  document.querySelectorAll('#list .row').forEach((row) => {
+    const t = shown[+row.dataset.i];
+    if (!t) return;
+    const playing = inQueue ? +row.dataset.i === player.index : cur?.id === t.id;
+    row.classList.toggle('playing', playing);
+    const fav = row.querySelector('.fav');
+    fav.textContent = isFav(t) ? '♥' : '♡';
+    fav.classList.toggle('on', isFav(t));
+  });
+}
+
+$('#list').addEventListener('click', (e) => {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const i = +row.dataset.i;
+  const t = shown[i];
+  const act = e.target.closest('[data-act]')?.dataset.act;
+  if (act === 'fav') return toggleFav(t);
+  if (act === 'enqueue') { player.enqueue(t); return toast('Añadida a la cola: ' + t.title); }
+  if (act === 'remove') { player.removeAt(i); return; }
+  if ($('#list').dataset.queue === '1') player.jumpTo(i);
+  else player.playList(shown, i);
+});
+
+/* ---------- barra del reproductor ---------- */
+function updateNowFav() {
+  const t = player.track;
+  const btn = $('#npFav');
+  btn.hidden = !t;
+  if (t) { btn.textContent = isFav(t) ? '♥' : '♡'; btn.classList.toggle('on', isFav(t)); }
+}
+
+player.on('track', (t) => {
+  $('#npTitle').textContent = t.title;
+  $('#npArtist').textContent = t.artist + (t.provider === 'deezer' ? ' · vista previa' : '');
+  const img = $('#npCover');
+  img.hidden = !t.cover;
+  if (t.cover) img.src = t.cover;
+  document.title = `${t.title} · ${t.artist}`;
+  updateNowFav();
+  markRows();
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: t.title, artist: t.artist, album: t.album,
+      artwork: t.cover ? [{ src: t.cover, sizes: '300x300' }] : [],
+    });
+  }
+});
+
+player.on('queue', () => { if (view === 'queue') showView('queue'); });
+
+player.on('state', (s) => {
+  $('#playBtn').innerHTML = s.paused ? '▶&#xFE0E;' : '⏸&#xFE0E;';
+  $('#curTime').textContent = fmt(s.position);
+  $('#durTime').textContent = fmt(s.duration);
+  if (!seeking) $('#seek').value = s.duration ? Math.round((s.position / s.duration) * 1000) : 0;
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s.paused ? 'paused' : 'playing';
+});
+
+player.on('error', (e) => toast(e.message));
+
+$('#playBtn').onclick = () => player.toggle();
+$('#nextBtn').onclick = () => player.next();
+$('#prevBtn').onclick = () => player.prev();
+$('#npFav').onclick = () => player.track && toggleFav(player.track);
+
+function paintModes() {
+  $('#shuffleBtn').classList.toggle('on', player.shuffle);
+  const r = $('#repeatBtn');
+  r.classList.toggle('on', player.repeat !== 'off');
+  r.textContent = player.repeat === 'one' ? '↻¹' : '↻';
+  r.title = { off: 'Repetir: no', all: 'Repetir: todo', one: 'Repetir: una' }[player.repeat];
+}
+$('#shuffleBtn').onclick = () => { player.toggleShuffle(); paintModes(); };
+$('#repeatBtn').onclick = () => { player.cycleRepeat(); paintModes(); };
+paintModes();
+
+const seekEl = $('#seek');
+seekEl.addEventListener('input', () => {
+  seeking = true;
+  $('#curTime').textContent = fmt((seekEl.value / 1000) * player.state.duration);
+});
+seekEl.addEventListener('change', () => {
+  seeking = false;
+  if (player.state.duration) player.seek((seekEl.value / 1000) * player.state.duration);
+});
+
+const volEl = $('#volume');
+volEl.value = Math.round(player.volume * 100);
+volEl.addEventListener('input', () => player.setVolume(volEl.value / 100));
+
+if ('mediaSession' in navigator) {
+  const ms = navigator.mediaSession;
+  ms.setActionHandler('play', () => player.state.paused && player.toggle());
+  ms.setActionHandler('pause', () => !player.state.paused && player.toggle());
+  ms.setActionHandler('nexttrack', () => player.next());
+  ms.setActionHandler('previoustrack', () => player.prev());
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input, textarea, dialog')) return;
+  if (e.code === 'Space') { e.preventDefault(); player.toggle(); }
+  else if (e.code === 'ArrowRight' && e.shiftKey) player.next();
+  else if (e.code === 'ArrowLeft' && e.shiftKey) player.prev();
+});
+
+/* ---------- navegación y búsqueda ---------- */
+document.querySelectorAll('.nav-item').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
+$('#providers').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-provider]');
+  if (b) selectProvider(b.dataset.provider);
+});
+$('#searchForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = $('#searchInput').value.trim();
+  if (q) search(q); else showView('home');
+});
+
+/* ---------- ajustes ---------- */
+const dlg = $('#settings');
+
+function paintSpotifyStatus() {
+  $('#spStatus').textContent = spotify.isReady() ? '✓ Conectado' : 'No conectado';
+}
+
+function openSettings() {
+  $('#ytKey').value = store.get('ytKey', '');
+  $('#spClientId').value = store.get('spClientId', '');
+  $('#redirectUri').textContent = redirectUri();
+  paintSpotifyStatus();
+  dlg.showModal();
+}
+
+function saveSettings() {
+  store.set('ytKey', $('#ytKey').value.trim());
+  const id = $('#spClientId').value.trim();
+  if (id !== store.get('spClientId', '')) logout();
+  store.set('spClientId', id);
+  renderProviders();
+}
+
+$('#settingsBtn').onclick = openSettings;
+document.addEventListener('click', (e) => { if (e.target.closest('[data-open-settings]')) openSettings(); });
+dlg.addEventListener('close', () => {
+  if (dlg.returnValue === 'save') {
+    saveSettings();
+    if (lastQuery) search(lastQuery); else if (view !== 'favorites' && view !== 'queue') showView('home');
+  }
+});
+$('#spLogin').onclick = async () => {
+  saveSettings();
+  try { await login(); } catch (e) { toast(e.message); }
+};
+$('#spLogout').onclick = () => { logout(); paintSpotifyStatus(); renderProviders(); };
+
+/* ---------- inicio ---------- */
+(async () => {
+  try {
+    if (await handleRedirect()) {
+      providerId = 'spotify';
+      store.set('provider', 'spotify');
+      toast('Spotify conectado');
+    }
+  } catch (e) {
+    toast(e.message);
+  }
+  renderProviders();
+  showView('home');
+})();

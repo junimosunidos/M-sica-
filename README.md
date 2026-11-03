@@ -1,6 +1,7 @@
 # 🎵 Música
 
-Reproductor de música web que se conecta a **Deezer**, **YouTube** y **Spotify** a través de sus APIs oficiales.
+Reproductor de música web que se conecta a **Audius**, **YouTube**, **Spotify** y **Deezer** a través de sus APIs oficiales,
+y que también reproduce tus propios archivos de música.
 No necesita servidor ni compilación: es HTML + CSS + JavaScript puro.
 
 ## Funciones
@@ -17,6 +18,8 @@ No necesita servidor ni compilación: es HTML + CSS + JavaScript puro.
 
 | Fuente  | Configuración | Qué se reproduce |
 |---------|---------------|------------------|
+| Audius  | Ninguna | Canción completa (artistas independientes) |
+| Mis archivos | Ninguna | Tus propios MP3/M4A/FLAC…, guardados en el navegador |
 | Deezer  | Ninguna | Vistas previas de 30 s (la API pública no permite más) |
 | YouTube | API key gratuita | Canción completa (reproductor oficial de YouTube) |
 | Spotify | Client ID + cuenta **Premium** | Canción completa (Web Playback SDK) |
@@ -62,6 +65,8 @@ css/styles.css          Estilos
 js/app.js               Lógica de la interfaz (vistas, lista, ajustes)
 js/player.js            Reproductor unificado + adaptadores (audio, YouTube, Spotify)
 js/storage.js           Guardado en localStorage
+js/providers/audius.js  API de Audius
+js/providers/local.js   Mis archivos (IndexedDB)
 js/providers/deezer.js  API de Deezer (JSONP)
 js/providers/youtube.js API de YouTube Data v3
 js/providers/spotify.js OAuth PKCE + Web API de Spotify

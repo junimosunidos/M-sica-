@@ -83,6 +83,10 @@ a { color: var(--accent-2); }
 .link-btn { padding: 4px 12px; margin-left: 6px; font-size: 13px; }
 .view-title { margin: 24px 0 12px; font-size: 24px; }
 .empty { color: var(--muted); padding: 24px 4px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.toolbar button { background: var(--accent); border: 0; border-radius: 999px; padding: 8px 18px; font-weight: 600; color: #fff; }
+.toolbar button:hover { background: var(--accent-2); }
+.toolbar button.secondary { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); }
 
 .track-list { display: flex; flex-direction: column; }
 .row {
@@ -101,6 +105,8 @@ a { color: var(--accent-2); }
 .artist, .album, .dur { color: var(--muted); font-size: 14px; }
 .dur { text-align: right; font-variant-numeric: tabular-nums; }
 .badge { font-size: 10px; font-weight: 700; padding: 3px 0; border-radius: 4px; text-align: center; color: #000; }
+.badge.audius { background: #cc0fe0; color: #fff; }
+.badge.local { background: #f5b942; }
 .badge.deezer { background: var(--deezer); color: #fff; }
 .badge.youtube { background: var(--youtube); color: #fff; }
 .badge.spotify { background: var(--spotify); }
@@ -180,8 +186,8 @@ menu { display: flex; justify-content: flex-end; gap: 8px; margin: 6px 0 0; padd
   .nav-item { padding: 6px 10px; }
   .sidebar-section { width: 100%; order: 3; }
   .sidebar-section h4 { display: none; }
-  .providers { flex-direction: row; }
-  .provider { flex: 1; padding: 6px 10px; }
+  .providers { flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+  .provider { flex: 0 0 auto; padding: 6px 10px; white-space: nowrap; }
   .provider small { display: none; }
   .settings-btn { margin: 0 0 0 auto; padding: 6px 10px; }
   .main { padding: 16px; }

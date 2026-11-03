@@ -31,6 +31,11 @@
       </form>
       <div id="notice" class="notice" hidden></div>
       <h2 id="viewTitle" class="view-title"></h2>
+      <div id="localBar" class="toolbar" hidden>
+        <button type="button" id="addFilesBtn">＋ Añadir canciones</button>
+        <button type="button" id="clearLocalBtn" class="secondary">Vaciar biblioteca</button>
+        <input id="fileInput" type="file" accept="audio/*,.mp3,.m4a,.flac,.ogg,.opus,.wav" multiple hidden>
+      </div>
       <div id="list" class="track-list"></div>
     </main>
   </div>
@@ -69,6 +74,12 @@
   <dialog id="settings">
     <form method="dialog" class="settings-form">
       <h3>Ajustes</h3>
+
+      <section>
+        <h4>Audius y Mis archivos</h4>
+        <p class="hint">Canciones completas sin configurar nada. En «Mis archivos» puedes subir tus propios MP3;
+          se guardan solo en este navegador.</p>
+      </section>
 
       <section>
         <h4>Deezer</h4>

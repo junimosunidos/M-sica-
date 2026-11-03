@@ -1,14 +1,16 @@
 import { store } from './storage.js';
 import { Player } from './player.js';
+import { audius } from './providers/audius.js';
+import { local } from './providers/local.js';
 import { deezer } from './providers/deezer.js';
 import { youtube } from './providers/youtube.js';
 import { spotify, login, logout, handleRedirect, redirectUri } from './providers/spotify.js';
 
-const providers = { deezer, youtube, spotify };
+const providers = { audius, local, youtube, spotify, deezer };
 const $ = (s) => document.querySelector(s);
 const player = new Player();
 
-let providerId = providers[store.get('provider')] ? store.get('provider') : 'deezer';
+let providerId = providers[store.get('provider')] ? store.get('provider') : 'audius';
 let view = 'home';
 let shown = [];          // pistas mostradas en la lista actual
 let lastQuery = '';
@@ -71,9 +73,14 @@ function setNav(v) {
   document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
 }
 
+function renderToolbar() {
+  $('#localBar').hidden = !(providerId === 'local' && (view === 'home' || view === 'search'));
+}
+
 async function loadInto(title, fetcher) {
   const p = providers[providerId];
   $('#viewTitle').textContent = title;
+  renderToolbar();
   if (!p.isReady()) {
     notice(p.setupHint, true);
     renderList([]);
@@ -86,7 +93,11 @@ async function loadInto(title, fetcher) {
   try {
     const tracks = await fetcher(p);
     if (loadInto.token !== token) return;
-    renderList(tracks, { empty: 'No se encontraron canciones.' });
+    renderList(tracks, {
+      empty: providerId === 'local' && view === 'home'
+        ? 'Tu biblioteca está vacía. Pulsa «Añadir canciones» o arrastra aquí tus archivos de audio.'
+        : 'No se encontraron canciones.',
+    });
   } catch (e) {
     if (loadInto.token !== token) return;
     renderList([]);
@@ -104,10 +115,12 @@ function showView(v) {
     loadInto(`Lo más escuchado · ${providers[providerId].name}`, (p) => p.top());
   } else if (v === 'favorites') {
     notice('');
+    renderToolbar();
     $('#viewTitle').textContent = 'Favoritos';
     renderList(favorites, { empty: 'Aún no tienes favoritos. Pulsa ♡ en cualquier canción.' });
   } else if (v === 'queue') {
     notice('');
+    renderToolbar();
     $('#viewTitle').textContent = 'Cola de reproducción';
     renderList(player.queue, { queue: true, empty: 'La cola está vacía.' });
   }
@@ -121,7 +134,7 @@ function search(q) {
 }
 
 /* ---------- lista de canciones ---------- */
-const badge = { deezer: 'DZ', youtube: 'YT', spotify: 'SP' };
+const badge = { audius: 'AU', local: 'MP3', deezer: 'DZ', youtube: 'YT', spotify: 'SP' };
 
 function renderList(tracks, opts = {}) {
   shown = tracks;
@@ -268,6 +281,31 @@ $('#searchForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const q = $('#searchInput').value.trim();
   if (q) search(q); else showView('home');
+});
+
+/* ---------- mis archivos ---------- */
+async function addFiles(files) {
+  if (!files?.length) return;
+  toast('Guardando canciones…');
+  const n = await local.add([...files]);
+  toast(n ? `${n} canción${n === 1 ? '' : 'es'} añadida${n === 1 ? '' : 's'}` : 'No se encontraron archivos de audio');
+  if (providerId !== 'local') selectProvider('local'); else showView('home');
+}
+
+$('#addFilesBtn').onclick = () => $('#fileInput').click();
+$('#fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+$('#clearLocalBtn').onclick = async () => {
+  if (!confirm('¿Borrar todas tus canciones de esta app? (Los archivos originales no se tocan)')) return;
+  await local.clear();
+  favorites = favorites.filter((f) => f.provider !== 'local');
+  store.set('favorites', favorites);
+  showView('home');
+};
+document.addEventListener('dragover', (e) => { if (e.dataTransfer?.types.includes('Files')) e.preventDefault(); });
+document.addEventListener('drop', (e) => {
+  if (!e.dataTransfer?.files.length) return;
+  e.preventDefault();
+  addFiles(e.dataTransfer.files);
 });
 
 /* ---------- ajustes ---------- */

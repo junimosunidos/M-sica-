@@ -1,6 +1,7 @@
 // Reproductor unificado: una cola con pistas de cualquier fuente y un "adaptador" por fuente.
 import { store } from './storage.js';
 import { deezer } from './providers/deezer.js';
+import { local } from './providers/local.js';
 import { api, getToken } from './providers/spotify.js';
 
 function loadScript(src) {
@@ -9,7 +10,7 @@ function loadScript(src) {
   document.head.appendChild(s);
 }
 
-/* ---------- Deezer: <audio> HTML5 ---------- */
+/* ---------- Audius, Mis archivos y Deezer: <audio> HTML5 ---------- */
 class AudioAdapter {
   constructor() {
     this.a = new Audio();
@@ -20,8 +21,10 @@ class AudioAdapter {
     });
   }
   async load(track) {
-    const src = await deezer.resolve(track);
-    if (!src) throw new Error('Esta canción no tiene vista previa');
+    const src = track.provider === 'deezer' ? await deezer.resolve(track)
+      : track.provider === 'local' ? await local.url(track)
+      : track.src;
+    if (!src) throw new Error('Esta canción no se puede reproducir');
     this.a.src = src;
     await this.a.play();
   }
@@ -166,8 +169,9 @@ export class Player {
     this.handlers = {};
     this.errors = 0;
 
-    this.adapters = { deezer: new AudioAdapter(), youtube: new YouTubeAdapter(), spotify: new SpotifyAdapter() };
-    for (const ad of Object.values(this.adapters)) {
+    const audio = new AudioAdapter();
+    this.adapters = { audius: audio, local: audio, deezer: audio, youtube: new YouTubeAdapter(), spotify: new SpotifyAdapter() };
+    for (const ad of new Set(Object.values(this.adapters))) {
       ad.onEnded = () => { if (ad === this.current) this._ended(); };
       ad.onError = (e) => { if (ad === this.current) this._failed(e); };
     }

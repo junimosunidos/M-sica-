@@ -6,6 +6,14 @@ No necesita servidor ni compilación: es HTML + CSS + JavaScript puro.
 
 ## Funciones
 
+**Con tu cuenta de YouTube Music** (sección *Biblioteca*):
+- Ver tus listas y tus «me gusta»
+- **Aleatorio de todo**: todas las canciones de todas tus listas + «me gusta», sin repetidas y sin repetir hasta que suenen todas
+- **Mix**: tus canciones intercaladas con canciones nuevas de los mismos géneros (2 tuyas → 1 nueva, marcada como «nueva»)
+- **Agitar para saltar**: agita el móvil dos veces seguidas para pasar a la siguiente canción
+
+**Generales:**
+
 - Búsqueda de canciones y artistas en la fuente elegida
 - «Lo más escuchado» de cada fuente (listas de éxitos / tus canciones más escuchadas en Spotify)
 - Reproductor con cola, anterior/siguiente, aleatorio, repetir (todo / una), barra de progreso y volumen
@@ -38,13 +46,31 @@ Abre **http://127.0.0.1:8000/** (usa `127.0.0.1`, no `localhost`: Spotify solo a
 
 También se puede publicar gratis con **GitHub Pages** (Settings → Pages → rama y carpeta raíz).
 
-## Configurar YouTube
+## Conectar tu cuenta de YouTube Music
 
-1. Entra en [Google Cloud Console](https://console.cloud.google.com/), crea un proyecto y activa **YouTube Data API v3**.
-2. Crea una **API key** (Credenciales → Crear credenciales → Clave de API). Recomendado: restringirla a tu dominio.
-3. En la app: ⚙ Ajustes → pega la clave → Guardar.
+YouTube Music no tiene API pública, pero tus listas y «me gusta» de YouTube Music se guardan en tu cuenta de YouTube,
+así que se leen con la YouTube Data API (permiso de **solo lectura**). Se hace una vez:
 
-La cuota gratuita es de 10.000 unidades/día (cada búsqueda gasta ~101).
+1. Entra en [Google Cloud Console](https://console.cloud.google.com/) y crea un proyecto.
+2. *APIs y servicios → Biblioteca* → activa **YouTube Data API v3**.
+3. *APIs y servicios → Pantalla de consentimiento de OAuth* → tipo **Externo**, pon un nombre a la app y tu correo.
+   En **Usuarios de prueba** añade tu propia cuenta de Google.
+4. *APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth* → tipo **Aplicación web**.
+   En **Orígenes de JavaScript autorizados** añade la dirección que aparece en ⚙ Ajustes
+   (por ejemplo `http://127.0.0.1:8000` y, si la publicas, `https://tuusuario.github.io`).
+5. Copia el **ID de cliente**, pégalo en ⚙ Ajustes y pulsa **Conectar con Google**.
+
+Google mostrará un aviso de «app no verificada» porque la app es tuya y está en pruebas: pulsa *Continuar*.
+
+**A tener en cuenta**
+- La cuota gratuita de la API es de 10.000 unidades/día. Leer tu biblioteca gasta muy poco; cada **mix** gasta unas
+  300–400 (hace 3–4 búsquedas), así que da para ~25 mixes al día.
+- La música suena con el reproductor oficial de YouTube, que debe verse en pantalla. El plan *YouTube Music Premium*
+  normalmente no quita los anuncios de YouTube (eso lo hace *YouTube Premium*).
+- En el móvil la música se para si bloqueas la pantalla o cambias de app (limitación de YouTube).
+- «Agitar para saltar» necesita que la app esté abierta por **HTTPS** (por ejemplo con GitHub Pages) para funcionar en el móvil.
+
+Alternativa sin cuenta: en ⚙ Ajustes puedes poner solo una API key de YouTube Data API v3 (búsqueda, sin biblioteca).
 
 ## Configurar Spotify
 
@@ -64,6 +90,9 @@ index.html              Interfaz
 css/styles.css          Estilos
 js/app.js               Lógica de la interfaz (vistas, lista, ajustes)
 js/player.js            Reproductor unificado + adaptadores (audio, YouTube, Spotify)
+js/library.js           Biblioteca de YouTube Music, aleatorio de todo y mix por géneros
+js/shake.js             Agitar para saltar
+js/providers/google.js  Inicio de sesión con Google
 js/storage.js           Guardado en localStorage
 js/providers/audius.js  API de Audius
 js/providers/local.js   Mis archivos (IndexedDB)

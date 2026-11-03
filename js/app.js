@@ -5,6 +5,9 @@ import { local } from './providers/local.js';
 import { deezer } from './providers/deezer.js';
 import { youtube } from './providers/youtube.js';
 import { spotify, login, logout, handleRedirect, redirectUri } from './providers/spotify.js';
+import { googleConnect, googleDisconnect, isGoogleConnected } from './providers/google.js';
+import { LIKED, ALL, myPlaylists, getTracks, buildMix, describe, shuffled, clearLibraryCache, genreEs } from './library.js';
+import { createShake } from './shake.js';
 
 const providers = { audius, local, youtube, spotify, deezer };
 const $ = (s) => document.querySelector(s);
@@ -75,6 +78,7 @@ function setNav(v) {
 
 function renderToolbar() {
   $('#localBar').hidden = !(providerId === 'local' && (view === 'home' || view === 'search'));
+  if (view !== 'library' && view !== 'playlist') $('#viewActions').hidden = true;
 }
 
 async function loadInto(title, fetcher) {
@@ -107,12 +111,15 @@ async function loadInto(title, fetcher) {
 
 function showView(v) {
   view = v;
+  tokens.view = null;
   setNav(v);
   loadInto.token = null;
   if (v === 'home') {
     lastQuery = '';
     $('#searchInput').value = '';
     loadInto(`Lo más escuchado · ${providers[providerId].name}`, (p) => p.top());
+  } else if (v === 'library') {
+    showLibrary();
   } else if (v === 'favorites') {
     notice('');
     renderToolbar();
@@ -127,6 +134,7 @@ function showView(v) {
 }
 
 function search(q) {
+  tokens.view = null;
   lastQuery = q;
   view = 'search';
   setNav(null);
@@ -149,7 +157,7 @@ function renderList(tracks, opts = {}) {
       <span class="num">${i + 1}</span>
       ${t.cover ? `<img class="cover" src="${esc(t.cover)}" alt="" loading="lazy">` : '<span class="cover"></span>'}
       <div class="meta">
-        <div class="title">${esc(t.title)}</div>
+        <div class="title">${esc(t.title)}${t.isNew ? '<span class="new-tag">nueva</span>' : ''}</div>
         <div class="artist">${esc(t.artist)}</div>
       </div>
       <div class="album">${esc(t.album)}</div>
@@ -175,7 +183,8 @@ function markRows() {
   });
 }
 
-$('#list').addEventListener('click', (e) => {
+$('#list').addEventListener('click', async (e) => {
+  if (await onLibraryClick(e)) return;
   const row = e.target.closest('.row');
   if (!row) return;
   const i = +row.dataset.i;
@@ -225,6 +234,7 @@ player.on('state', (s) => {
 });
 
 player.on('error', (e) => toast(e.message));
+player.on('modes', () => paintModes());
 
 $('#playBtn').onclick = () => player.toggle();
 $('#nextBtn').onclick = () => player.next();
@@ -308,6 +318,132 @@ document.addEventListener('drop', (e) => {
   addFiles(e.dataTransfer.files);
 });
 
+/* ---------- biblioteca de YouTube Music ---------- */
+// Cada operación lleva un "token": si el usuario cambia de pantalla o lanza otra, la anterior se descarta.
+const tokens = { view: null, play: null };
+const busy = (fn, kind = 'view') => async (...args) => {
+  const t = { kind };
+  tokens[kind] = t;
+  try { await fn(t, ...args); } catch (e) { if (tokens[kind] === t) toast(e.message); }
+};
+const stale = (t) => tokens[t.kind] !== t;
+
+function actions(html) {
+  const el = $('#viewActions');
+  el.innerHTML = html;
+  el.hidden = !html;
+}
+
+const showLibrary = busy(async (t) => {
+  view = 'library';
+  setNav('library');
+  notice('');
+  renderToolbar();
+  $('#viewTitle').textContent = 'Tu biblioteca de YouTube Music';
+  shown = [];
+  if (!isGoogleConnected()) {
+    actions('');
+    $('#list').innerHTML = `
+      <div class="lib-intro">
+        <strong>Conecta tu cuenta de Google</strong>
+        <p>Verás aquí tus listas y tus «me gusta» de YouTube Music, y podrás escuchar todo en aleatorio
+          o crear mixes con canciones nuevas de los mismos géneros. Solo se pide permiso de lectura.</p>
+        <button type="button" class="link-btn" data-lib="connect">Conectar con Google</button>
+      </div>`;
+    return;
+  }
+  actions(`
+    <button type="button" class="primary" data-lib="shuffle" data-pl="${ALL}">🔀 Aleatorio de todo</button>
+    <button type="button" data-lib="mix" data-pl="${ALL}">✨ Mix de todo</button>
+    <button type="button" data-lib="refresh">↻ Actualizar</button>`);
+  $('#list').innerHTML = '<div class="empty">Cargando tus listas…</div>';
+  const lists = await myPlaylists();
+  if (stale(t)) return;
+  const card = (id, title, sub, cover) => `
+    <div class="pl-card">
+      ${cover ? `<img src="${esc(cover)}" alt="" loading="lazy">` : '<span class="pl-ph">♥</span>'}
+      <div style="min-width:0">
+        <div class="pl-name" data-lib="open" data-pl="${esc(id)}" data-title="${esc(title)}">${esc(title)}</div>
+        <small>${esc(sub)}</small>
+      </div>
+      <div class="pl-actions">
+        <button type="button" class="primary" data-lib="play" data-pl="${esc(id)}">▶ Reproducir</button>
+        <button type="button" data-lib="shuffle" data-pl="${esc(id)}">🔀 Aleatorio</button>
+        <button type="button" data-lib="mix" data-pl="${esc(id)}">✨ Mix</button>
+      </div>
+    </div>`;
+  $('#list').innerHTML = `<div class="pl-grid">
+    ${card(LIKED, 'Me gusta', 'Tus canciones favoritas', '')}
+    ${lists.map((p) => card(p.id, p.title, `${p.count} canciones`, p.cover)).join('')}
+  </div>` + (lists.length ? '' : '<div class="empty">No se encontraron listas creadas por ti.</div>');
+});
+
+const openPlaylist = busy(async (t, id, title) => {
+  view = 'playlist';
+  setNav('library');
+  notice('');
+  $('#viewTitle').textContent = title;
+  actions(`
+    <button type="button" data-lib="back">← Biblioteca</button>
+    <button type="button" class="primary" data-lib="play" data-pl="${esc(id)}">▶ Reproducir</button>
+    <button type="button" data-lib="shuffle" data-pl="${esc(id)}">🔀 Aleatorio</button>
+    <button type="button" data-lib="mix" data-pl="${esc(id)}">✨ Mix</button>`);
+  $('#list').innerHTML = '<div class="empty">Cargando canciones…</div>';
+  const tracks = await getTracks(id, toast);
+  if (stale(t)) return;
+  const { genres } = describe(tracks);
+  renderList(tracks, { empty: 'Esta lista no tiene canciones que se puedan reproducir aquí.' });
+  if (genres.length) $('#list').insertAdjacentHTML('afterbegin', `<div class="genres">Géneros: ${esc(genres.map(genreEs).join(' · '))}</div>`);
+});
+
+const playFrom = busy(async (t, id, mode) => {
+  toast(id === ALL ? 'Juntando todas tus canciones…' : 'Cargando canciones…');
+  const tracks = await getTracks(id, toast);
+  if (stale(t)) return;
+  if (!tracks.length) throw new Error('No hay canciones que se puedan reproducir');
+  if (mode === 'play') {
+    player.playList(tracks, 0, { shuffle: false });
+  } else if (mode === 'shuffle') {
+    player.playList(shuffled(tracks), 0, { shuffle: true });
+    toast(`🔀 Aleatorio de ${tracks.length} canciones`);
+  } else {
+    const mix = await buildMix(tracks, { onProgress: toast });
+    if (stale(t)) return;
+    player.playList(mix, 0, { shuffle: false });
+    const n = mix.filter((x) => x.isNew).length;
+    toast(`✨ Mix listo: ${tracks.length} tuyas + ${n} nuevas`);
+    showView('queue');
+  }
+}, 'play');
+
+async function onLibraryClick(e) {
+  const b = e.target.closest('[data-lib]');
+  if (!b) return false;
+  const { lib, pl, title } = b.dataset;
+  if (lib === 'connect') {
+    if (!store.get('gClientId', '')) { toast('Primero pega tu Client ID de Google'); openSettings(); return true; }
+    try { await googleConnect(); clearLibraryCache(); renderProviders(); showLibrary(); } catch (err) { toast(err.message); }
+  } else if (lib === 'refresh') { clearLibraryCache(); showLibrary(); }
+  else if (lib === 'back') showLibrary();
+  else if (lib === 'open') openPlaylist(pl, title);
+  else playFrom(pl, lib);
+  return true;
+}
+$('#viewActions').addEventListener('click', onLibraryClick);
+
+/* ---------- agitar para saltar ---------- */
+const shake = createShake(() => {
+  if (!player.track) return;
+  navigator.vibrate?.(60);
+  player.next();
+  toast('⏭ Canción saltada');
+});
+shake.setSensitivity(store.get('shakeLevel', 'media'));
+if (store.get('shakeOn', false) && shake.supported) {
+  if (shake.needsPermission) document.addEventListener('click', () => shake.enable().catch(() => {}), { once: true });
+  else shake.enable();
+}
+
 /* ---------- ajustes ---------- */
 const dlg = $('#settings');
 
@@ -315,8 +451,18 @@ function paintSpotifyStatus() {
   $('#spStatus').textContent = spotify.isReady() ? '✓ Conectado' : 'No conectado';
 }
 
+function paintGoogleStatus() {
+  $('#gStatus').textContent = isGoogleConnected() ? '✓ Conectado' : 'No conectado';
+}
+
 function openSettings() {
   $('#ytKey').value = store.get('ytKey', '');
+  $('#gClientId').value = store.get('gClientId', '');
+  $('#gOrigin').textContent = location.origin;
+  paintGoogleStatus();
+  $('#shakeOn').checked = shake.active || store.get('shakeOn', false);
+  $('#shakeOn').disabled = !shake.supported;
+  $('#shakeLevel').value = store.get('shakeLevel', 'media');
   $('#spClientId').value = store.get('spClientId', '');
   $('#redirectUri').textContent = redirectUri();
   paintSpotifyStatus();
@@ -325,6 +471,11 @@ function openSettings() {
 
 function saveSettings() {
   store.set('ytKey', $('#ytKey').value.trim());
+  const gid = $('#gClientId').value.trim();
+  if (gid !== store.get('gClientId', '')) { googleDisconnect(); clearLibraryCache(); }
+  store.set('gClientId', gid);
+  store.set('shakeLevel', $('#shakeLevel').value);
+  shake.setSensitivity($('#shakeLevel').value);
   const id = $('#spClientId').value.trim();
   if (id !== store.get('spClientId', '')) logout();
   store.set('spClientId', id);
@@ -336,13 +487,38 @@ document.addEventListener('click', (e) => { if (e.target.closest('[data-open-set
 dlg.addEventListener('close', () => {
   if (dlg.returnValue === 'save') {
     saveSettings();
-    if (lastQuery) search(lastQuery); else if (view !== 'favorites' && view !== 'queue') showView('home');
+    if (lastQuery) search(lastQuery);
+    else if (view === 'library' || view === 'playlist') showLibrary();
+    else if (view !== 'favorites' && view !== 'queue') showView('home');
   }
 });
 $('#spLogin').onclick = async () => {
   saveSettings();
   try { await login(); } catch (e) { toast(e.message); }
 };
+$('#gLogin').onclick = async () => {
+  saveSettings();
+  try {
+    await googleConnect();
+    clearLibraryCache();
+    paintGoogleStatus();
+    renderProviders();
+    toast('Cuenta de Google conectada');
+  } catch (e) { toast(e.message); }
+};
+$('#gLogout').onclick = () => { googleDisconnect(); clearLibraryCache(); paintGoogleStatus(); renderProviders(); };
+$('#shakeOn').addEventListener('change', async (e) => {
+  try {
+    if (e.target.checked) {
+      await shake.enable();
+      toast('Agita el móvil dos veces seguidas para saltar');
+    } else shake.disable();
+    store.set('shakeOn', e.target.checked);
+  } catch (err) {
+    e.target.checked = false;
+    toast(err.message);
+  }
+});
 $('#spLogout').onclick = () => { logout(); paintSpotifyStatus(); renderProviders(); };
 
 /* ---------- inicio ---------- */

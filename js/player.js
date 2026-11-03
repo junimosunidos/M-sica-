@@ -71,13 +71,14 @@ class YouTubeAdapter {
   }
   async load(track) {
     this.wrap.hidden = false;
+    document.body.classList.add('has-yt');
     await this.ensure();
     this.p.setVolume(this.vol * 100);
     this.p.loadVideoById(track.videoId);
   }
   play() { this.p?.playVideo(); }
   pause() { this.p?.pauseVideo(); }
-  stop() { this.p?.stopVideo?.(); this.wrap.hidden = true; }
+  stop() { this.p?.stopVideo?.(); this.wrap.hidden = true; document.body.classList.remove('has-yt'); }
   seek(sec) { this.p?.seekTo(sec, true); }
   setVolume(v) { this.vol = v; this.p?.setVolume?.(v * 100); }
   async getState() {
@@ -168,6 +169,7 @@ export class Player {
     this.current = null;
     this.handlers = {};
     this.errors = 0;
+    this.played = new Set();
 
     const audio = new AudioAdapter();
     this.adapters = { audius: audio, local: audio, deezer: audio, youtube: new YouTubeAdapter(), spotify: new SpotifyAdapter() };
@@ -183,9 +185,11 @@ export class Player {
 
   get track() { return this.queue[this.index] || null; }
 
-  playList(tracks, i) {
+  playList(tracks, i, { shuffle } = {}) {
     this.queue = [...tracks];
     this.index = i;
+    this.played = new Set();
+    if (shuffle !== undefined) { this.shuffle = shuffle; store.set('shuffle', shuffle); this.emit('modes'); }
     this.emit('queue');
     return this._load();
   }
@@ -202,6 +206,7 @@ export class Player {
     if (i === this.index) return;
     this.queue.splice(i, 1);
     if (i < this.index) this.index--;
+    this.played = new Set([...this.played].filter((x) => x !== i).map((x) => (x > i ? x - 1 : x)));
     this.emit('queue');
   }
 
@@ -243,9 +248,15 @@ export class Player {
     const n = this.queue.length;
     if (!n) return;
     if (this.shuffle && n > 1) {
-      let r;
-      do r = Math.floor(Math.random() * n); while (r === this.index);
-      this.index = r;
+      // Aleatorio sin repetir: no vuelve a sonar ninguna hasta que hayan sonado todas.
+      this.played.add(this.index);
+      let left = [...Array(n).keys()].filter((i) => !this.played.has(i));
+      if (!left.length) {
+        if (auto && this.repeat === 'off') return;
+        this.played = new Set([this.index]);
+        left = [...Array(n).keys()].filter((i) => i !== this.index);
+      }
+      this.index = left[Math.floor(Math.random() * left.length)];
     } else if (this.index < n - 1) {
       this.index++;
     } else if (!auto || this.repeat === 'all') {
@@ -266,8 +277,8 @@ export class Player {
       this._load();
       return;
     }
-    const atEnd = this.index >= this.queue.length - 1;
-    if (atEnd && !this.shuffle && this.repeat === 'off') {
+    const atEnd = this.shuffle ? this.played.size + 1 >= this.queue.length : this.index >= this.queue.length - 1;
+    if (atEnd && this.repeat === 'off') {
       this.state = { ...this.state, paused: true };
       this.emit('state', this.state);
       return;

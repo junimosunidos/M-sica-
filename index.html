@@ -14,6 +14,7 @@
       <div class="brand"><span class="logo">♪</span> Música</div>
       <nav class="nav">
         <button class="nav-item active" data-view="home">Inicio</button>
+        <button class="nav-item" data-view="library">Biblioteca</button>
         <button class="nav-item" data-view="favorites">Favoritos</button>
         <button class="nav-item" data-view="queue">Cola</button>
       </nav>
@@ -31,8 +32,9 @@
       </form>
       <div id="notice" class="notice" hidden></div>
       <h2 id="viewTitle" class="view-title"></h2>
+      <div id="viewActions" class="toolbar" hidden></div>
       <div id="localBar" class="toolbar" hidden>
-        <button type="button" id="addFilesBtn">＋ Añadir canciones</button>
+        <button type="button" id="addFilesBtn" class="primary">＋ Añadir canciones</button>
         <button type="button" id="clearLocalBtn" class="secondary">Vaciar biblioteca</button>
         <input id="fileInput" type="file" accept="audio/*,.mp3,.m4a,.flac,.ogg,.opus,.wav" multiple hidden>
       </div>
@@ -87,12 +89,36 @@
       </section>
 
       <section>
-        <h4>YouTube</h4>
-        <label>API key de YouTube Data API v3
-          <input id="ytKey" type="text" spellcheck="false" placeholder="AIza…">
+        <h4>YouTube / YouTube Music</h4>
+        <label>Client ID de Google
+          <input id="gClientId" type="text" spellcheck="false" placeholder="xxxx.apps.googleusercontent.com">
         </label>
-        <p class="hint">Canciones completas. Crea la clave gratis en
-          <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Google Cloud Console</a>.</p>
+        <p class="hint">Para ver tus listas y «me gusta» de YouTube Music. En
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>
+          crea un «ID de cliente de OAuth» (aplicación web) y añade como origen autorizado: <code id="gOrigin"></code></p>
+        <div class="btn-row">
+          <button type="button" id="gLogin">Conectar con Google</button>
+          <button type="button" id="gLogout" class="secondary">Desconectar</button>
+          <span id="gStatus" class="hint"></span>
+        </div>
+        <details>
+          <summary class="hint">Alternativa sin cuenta: API key (solo búsqueda)</summary>
+          <label>API key de YouTube Data API v3
+            <input id="ytKey" type="text" spellcheck="false" placeholder="AIza…">
+          </label>
+        </details>
+      </section>
+
+      <section>
+        <h4>Agitar para saltar canción</h4>
+        <label class="check"><input id="shakeOn" type="checkbox"> Activar (en el móvil, con la app abierta)</label>
+        <label>Sensibilidad
+          <select id="shakeLevel">
+            <option value="alta">Alta (sacudida suave)</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja (sacudida fuerte)</option>
+          </select>
+        </label>
       </section>
 
       <section>

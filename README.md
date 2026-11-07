@@ -34,22 +34,23 @@ No necesita servidor ni compilación: es HTML + CSS + JavaScript puro.
 
 > YouTube Music no tiene API pública oficial, por eso se usa la categoría «Música» de YouTube.
 
-## 🤿 Juego: ABISMO
+## 🤿 Juego: ABYSS
 
-En [`abismo/`](abismo/) hay un juego diario de palabras (enlace «🤿 Abismo» en el menú). Eres un buzo y el fondo del mar está a **700 m**.
+En [`abyss/`](abyss/) hay un juego diario de palabras (enlace «🤿 Abyss» en el menú). Eres un buzo y el fondo del mar está a **1000 m**.
 Cada día hay **7 preguntas**, iguales para todos, con **25 segundos** para cada una. Gana la respuesta **más rara**, no la más popular:
 
 | Zona | Metros |
 |------|--------|
-| 🫧 Zona Soleada (muy común) | 10 |
-| 🐠 Zona Crepuscular | 30 |
-| 🦑 Zona de Medianoche | 60 |
-| 🐙 Zona Abisal (rarísima) | 85 |
-| 💎 **Uno en un Abismo** (la única respuesta perfecta) | 100 |
+| 🫧 Zona Soleada (muy común) | 15 |
+| 🐠 Zona Crepuscular | 45 |
+| 🦑 Zona de Medianoche | 85 |
+| 🐙 Zona Abisal (rarísima) | 120 |
+| 💎 **One in an Abyss** (la única respuesta perfecta) | 143 |
 
-Acertar las 7 perlas te lleva al fondo a 700 m exactos. Incluye resultado para compartir con emojis, racha y estadísticas
+Solo acertando las 7 perlas se toca el fondo: 7 × 143 = 1001 m, y el fondo te frena en 1000
+(sin las 7, el máximo es 978 m). Incluye resultado para compartir con emojis, racha y estadísticas
 (guardadas en el navegador) y un modo «Inmersión libre» con preguntas al azar.
-Las preguntas están en `abismo/js/preguntas.js`: para añadir más, copia una entrada y reparte las respuestas por zonas.
+Las preguntas están en `abyss/js/preguntas.js`: para añadir más, copia una entrada y reparte las respuestas por zonas.
 
 ## Cómo ejecutarla
 

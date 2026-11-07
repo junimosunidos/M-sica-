@@ -1,11 +1,11 @@
 import { PREGUNTAS } from './preguntas.js';
 import {
   ZONAS, FALLO, PROFUNDIDAD_FONDO, PREGUNTAS_POR_DIA, SEGUNDOS_POR_PREGUNTA,
-  prepararPregunta, puntuar, claveDia, numeroInmersion, preguntasDelDia, preguntasAleatorias, textoCompartir,
+  prepararPregunta, puntuar, profundidad, claveDia, numeroInmersion, preguntasDelDia, preguntasAleatorias, textoCompartir,
 } from './motor.js';
 
 const $ = (id) => document.getElementById(id);
-const CLAVE_STORAGE = 'abismo:v1';
+const CLAVE_STORAGE = 'abyss:v2'; // v2: fondo a 1000 m (las partidas de v1 eran a 700 m)
 
 // ---------- almacenamiento ----------
 function cargar() {
@@ -76,7 +76,7 @@ function fijarProfundidad(metros, animar = true) {
   requestAnimationFrame(paso);
 }
 
-const total = (res) => res.reduce((s, r) => s + r.metros, 0);
+const total = profundidad;
 
 // ---------- partida ----------
 function nuevaPartida(libre) {
@@ -205,11 +205,11 @@ function pintarFinal() {
 }
 
 function mensajeFinal(m) {
-  if (m >= 700) return 'Alcanzaste el fondo marino con siete perlas perfectas';
-  if (m >= 550) return 'Ya ves el lecho marino desde aquí';
-  if (m >= 400) return 'Las criaturas abisales te saludan';
-  if (m >= 250) return 'Ya no llega la luz del sol';
-  if (m >= 120) return 'Bajaste un buen trecho';
+  if (m >= 1000) return 'Alcanzaste el fondo marino con siete perlas perfectas';
+  if (m >= 800) return 'Ya ves el lecho marino desde aquí';
+  if (m >= 570) return 'Las criaturas abisales te saludan';
+  if (m >= 360) return 'Ya no llega la luz del sol';
+  if (m >= 170) return 'Bajaste un buen trecho';
   return 'Aún se ve la superficie';
 }
 

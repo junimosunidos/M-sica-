@@ -1,6 +1,6 @@
-// Banco de preguntas de ABISMO.
+// Banco de preguntas de ABYSS.
 // Cada pregunta tiene cuatro zonas de rareza (de más común a más rara) y una única «perla»:
-// la respuesta «Uno en un Abismo», que vale 100 m.
+// la respuesta «One in an Abyss», que vale 143 m.
 // Las variantes de una misma respuesta se separan con «|» (la primera es la que se muestra).
 // Las respuestas se comparan sin mayúsculas, sin tildes y sin artículos, y aceptan singular/plural.
 

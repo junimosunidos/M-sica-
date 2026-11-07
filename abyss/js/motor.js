@@ -1,17 +1,24 @@
-// Lógica pura de ABISMO (sin DOM): normalizar respuestas, puntuar y elegir la inmersión del día.
+// Lógica pura de ABYSS (sin DOM): normalizar respuestas, puntuar y elegir la inmersión del día.
 
-export const PROFUNDIDAD_FONDO = 700;
+export const PROFUNDIDAD_FONDO = 1000;
 export const PREGUNTAS_POR_DIA = 7;
 export const SEGUNDOS_POR_PREGUNTA = 25;
 
-// Zonas de menos a más profundas. La última es la perla: «Uno en un Abismo».
+// Zonas de menos a más profundas. La última es la perla: «One in an Abyss».
+// 7 perlas × 143 m = 1001 m, pero el fondo está a 1000 m: solo se toca fondo con las 7 perlas
+// (el máximo sin ellas es 6 × 143 + 120 = 978 m).
 export const ZONAS = [
-  { id: 'soleada', nombre: 'Zona Soleada', metros: 10, emoji: '🫧', desc: 'respuestas muy comunes' },
-  { id: 'crepuscular', nombre: 'Zona Crepuscular', metros: 30, emoji: '🐠', desc: 'respuestas habituales' },
-  { id: 'medianoche', nombre: 'Zona de Medianoche', metros: 60, emoji: '🦑', desc: 'respuestas poco comunes' },
-  { id: 'abisal', nombre: 'Zona Abisal', metros: 85, emoji: '🐙', desc: 'respuestas rarísimas' },
-  { id: 'perla', nombre: 'Uno en un Abismo', metros: 100, emoji: '💎', desc: 'la única respuesta perfecta' },
+  { id: 'soleada', nombre: 'Zona Soleada', metros: 15, emoji: '🫧', desc: 'respuestas muy comunes' },
+  { id: 'crepuscular', nombre: 'Zona Crepuscular', metros: 45, emoji: '🐠', desc: 'respuestas habituales' },
+  { id: 'medianoche', nombre: 'Zona de Medianoche', metros: 85, emoji: '🦑', desc: 'respuestas poco comunes' },
+  { id: 'abisal', nombre: 'Zona Abisal', metros: 120, emoji: '🐙', desc: 'respuestas rarísimas' },
+  { id: 'perla', nombre: 'One in an Abyss', metros: 143, emoji: '💎', desc: 'la única respuesta perfecta' },
 ];
+// Profundidad total de una lista de resultados (el fondo marino no deja bajar más).
+export function profundidad(resultados) {
+  return Math.min(PROFUNDIDAD_FONDO, resultados.reduce((s, r) => s + r.metros, 0));
+}
+
 export const FALLO = { id: 'fallo', nombre: 'Sin respuesta', metros: 0, emoji: '⬛' };
 
 // Fecha de la primera inmersión (inmersión nº 1).
@@ -143,9 +150,9 @@ export function preguntasAleatorias(total) {
 }
 
 export function textoCompartir(numero, resultados) {
-  const total = resultados.reduce((s, r) => s + r.metros, 0);
+  const total = profundidad(resultados);
   const fila = resultados.map((r) => r.emoji).join('');
   const perlas = resultados.filter((r) => r.zona === 4).length;
   const titulo = total >= PROFUNDIDAD_FONDO ? '¡Tocó fondo! 🏆' : `${total} m de profundidad`;
-  return `🤿 ABISMO #${numero} · ${titulo}\n${fila}\n💎 ${perlas}/${resultados.length} perlas`;
+  return `🤿 ABYSS #${numero} · ${titulo}\n${fila}\n💎 ${perlas}/${resultados.length} perlas`;
 }

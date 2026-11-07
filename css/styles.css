@@ -48,6 +48,7 @@ a { color: var(--accent-2); }
 .nav-item {
   text-align: left; background: none; border: 0; padding: 10px 12px; border-radius: 8px; color: var(--muted); font-weight: 600;
 }
+a.nav-item { text-decoration: none; }
 .nav-item:hover { background: var(--panel-2); color: var(--text); }
 .nav-item.active { background: var(--panel-2); color: var(--text); }
 .sidebar-section h4 { margin: 0 8px 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }

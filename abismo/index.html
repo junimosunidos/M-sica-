@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b4f7a">
+  <meta name="description" content="ABISMO: juego diario de palabras. Baja 700 m hasta el fondo del mar con las respuestas más raras.">
+  <title>ABISMO · Uno en un Abismo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤿</text></svg>">
+  <link rel="stylesheet" href="css/abismo.css">
+</head>
+<body>
+  <div class="burbujas" aria-hidden="true"></div>
+
+  <header class="cabecera">
+    <a class="volver" href="../" title="Volver al reproductor">♪</a>
+    <h1>ABISMO</h1>
+    <div class="acciones">
+      <button type="button" id="btnStats" class="icono" title="Estadísticas" aria-label="Estadísticas">📊</button>
+      <button type="button" id="btnAyuda" class="icono" title="Cómo se juega" aria-label="Cómo se juega">?</button>
+    </div>
+  </header>
+
+  <main class="escena">
+    <!-- Medidor de profundidad -->
+    <aside class="medidor" aria-label="Profundidad">
+      <div class="columna">
+        <div class="tramo">
+          <div class="marcas" id="marcas"></div>
+          <div class="buzo" id="buzo">🤿</div>
+        </div>
+        <div class="fondo-marino" aria-hidden="true">🪸🦀🐚</div>
+      </div>
+      <div class="lectura"><strong id="profundidad">0</strong><span>m</span></div>
+    </aside>
+
+    <section class="panel">
+      <!-- Inicio -->
+      <div id="vistaInicio" class="vista">
+        <p class="subtitulo" id="numInmersion">Inmersión #1</p>
+        <h2>Uno en un Abismo</h2>
+        <p>Eres un buzo y el fondo del mar está a <strong>700 m</strong>. Para bajar tienes que responder
+          <strong>7 preguntas</strong>, con <strong>25 segundos</strong> para cada una.</p>
+        <p>Aquí no gana la respuesta más popular: <strong>cuanto más rara sea, más bajas</strong>.</p>
+        <ul class="zonas" id="tablaZonas"></ul>
+        <button type="button" id="btnEmpezar" class="primario">Sumergirse 🤿</button>
+      </div>
+
+      <!-- Partida -->
+      <div id="vistaJuego" class="vista" hidden>
+        <div class="progreso">
+          <span id="numPregunta">Pregunta 1/7</span>
+          <span id="modo" class="etiqueta" hidden>Inmersión libre</span>
+        </div>
+        <h2 id="pregunta" class="pregunta"></h2>
+        <div class="reloj"><div id="barraTiempo" class="barra"></div><span id="segundos">25</span></div>
+
+        <form id="formRespuesta" class="respuesta" autocomplete="off">
+          <input id="entrada" type="text" maxlength="40" placeholder="Escribe tu respuesta…" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+          <button type="submit" class="primario">Bucear</button>
+        </form>
+        <p id="aviso" class="aviso" role="status" aria-live="polite"></p>
+
+        <div id="resultado" class="resultado" hidden>
+          <div class="emoji" id="resEmoji"></div>
+          <div>
+            <div class="zona" id="resZona"></div>
+            <div class="detalle" id="resDetalle"></div>
+          </div>
+          <div class="metros" id="resMetros"></div>
+          <button type="button" id="btnSiguiente" class="primario">Seguir bajando ↓</button>
+        </div>
+      </div>
+
+      <!-- Final -->
+      <div id="vistaFinal" class="vista" hidden>
+        <p class="subtitulo" id="finSub"></p>
+        <h2 id="finTitulo"></h2>
+        <p id="finTexto" class="fin-texto"></p>
+        <ol id="resumen" class="resumen"></ol>
+        <div class="botones">
+          <button type="button" id="btnCompartir" class="primario">Compartir</button>
+          <button type="button" id="btnLibre" class="secundario">Inmersión libre</button>
+        </div>
+        <p class="proxima" id="proxima"></p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dlgAyuda" class="dialogo">
+    <form method="dialog">
+      <h2>Cómo se juega</h2>
+      <p>Cada día hay una nueva inmersión con <strong>7 preguntas</strong>, la misma para todos.
+        Tienes <strong>25 segundos</strong> para escribir una respuesta válida a cada una.</p>
+      <p>Según lo rara que sea tu respuesta dentro del registro de respuestas válidas, bajarás más o menos metros:</p>
+      <ul class="zonas" id="tablaZonas2"></ul>
+      <p>En cada pregunta hay <strong>una sola respuesta</strong> que vale 100 m: el <strong>Uno en un Abismo</strong> 💎.
+        Encuentra las 7 para tocar el fondo a 700 m exactos.</p>
+      <p>Si escribes algo que no está en el registro puedes probar otra vez, mientras quede tiempo.
+        Se aceptan respuestas sin tildes, en singular o plural y con una pequeña errata.</p>
+      <button class="primario" value="ok">¡A bucear!</button>
+    </form>
+  </dialog>
+
+  <dialog id="dlgStats" class="dialogo">
+    <form method="dialog">
+      <h2>Estadísticas</h2>
+      <div class="stats" id="stats"></div>
+      <button class="primario" value="ok">Cerrar</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script type="module" src="js/juego.js"></script>
+</body>
+</html>

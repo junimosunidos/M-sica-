@@ -145,8 +145,9 @@ export function preguntasDelDia(clave, total) {
   return orden.slice(pos * PREGUNTAS_POR_DIA, (pos + 1) * PREGUNTAS_POR_DIA);
 }
 
-export function preguntasAleatorias(total) {
-  return barajar(total, Math.random).slice(0, PREGUNTAS_POR_DIA);
+// Orden aleatorio de todo el banco (modo ilimitado: no repite hasta haberlas usado todas).
+export function ordenAleatorio(total) {
+  return barajar(total, Math.random);
 }
 
 export function textoCompartir(numero, resultados) {

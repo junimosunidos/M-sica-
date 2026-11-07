@@ -48,8 +48,13 @@ Cada día hay **7 preguntas**, iguales para todos, con **25 segundos** para cada
 | 💎 **One in an Abyss** (la única respuesta perfecta) | 143 |
 
 Solo acertando las 7 perlas se toca el fondo: 7 × 143 = 1001 m, y el fondo te frena en 1000
-(sin las 7, el máximo es 978 m). Incluye resultado para compartir con emojis, racha y estadísticas
-(guardadas en el navegador) y un modo «Inmersión libre» con preguntas al azar.
+(sin las 7, el máximo es 978 m). Incluye resultado para compartir con emojis, racha y estadísticas (guardadas en el navegador).
+
+**Modo ilimitado ♾️**: aparte de la inmersión del día, puedes jugar todas las veces que quieras. Las preguntas no se acaban
+y no hay fondo; tienes 3 bombonas de oxígeno y cada pregunta sin respuesta gasta una. Guarda tu récord de profundidad.
+
+**Como artefacto de Claude**: `abyss/dist/abyss-artifact.html` es el juego entero en un solo archivo, listo para publicarlo
+como artefacto. Si cambias algo en `abyss/`, regenéralo con `python3 abyss/build.py`.
 Las preguntas están en `abyss/js/preguntas.js`: para añadir más, copia una entrada y reparte las respuestas por zonas.
 
 ## Cómo ejecutarla

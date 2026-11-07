@@ -1,0 +1,1301 @@
+<title>ABYSS · One in an Abyss</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="ABYSS: juego diario de palabras. Baja 1000 m hasta el fondo del mar con las respuestas más raras.">
+<!-- Archivo generado por abyss/build.py a partir de abyss/. No lo edites a mano. -->
+<style>
+html, body { height: 100%; }
+:root {
+  --agua: rgb(18, 132, 190);
+  --agua-2: rgb(10, 74, 122);
+  --texto: #eaf6ff;
+  --tenue: #9ec3dc;
+  --panel: rgba(4, 18, 36, 0.62);
+  --linea: rgba(160, 210, 240, 0.18);
+  --acento: #4fe3d6;
+  --soleada: #ffd76a;
+  --crepuscular: #ff9b6a;
+  --medianoche: #b98cff;
+  --abisal: #ff5fa8;
+  --perla: #7ff7ff;
+  --fallo: #7a8a99;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: #02101f linear-gradient(180deg, var(--agua) 0%, var(--agua-2) 100%) fixed;
+  transition: background 1.2s ease;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+/* ---------- burbujas ---------- */
+.burbujas { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.burbujas i {
+  position: absolute; bottom: -20px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .06);
+  animation: subir linear infinite;
+}
+@keyframes subir {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate(12px, -55vh); }
+  100% { transform: translate(-8px, -110vh); opacity: 0; }
+}
+
+/* ---------- cabecera ---------- */
+.cabecera {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--linea);
+}
+.cabecera h1 { margin: 0; font-size: 22px; letter-spacing: .32em; font-weight: 800; padding-left: .32em; }
+.volver { color: var(--tenue); text-decoration: none; font-size: 20px; width: 36px; }
+.acciones { justify-self: end; display: flex; gap: 6px; }
+.icono {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--linea);
+  background: var(--panel); font-weight: 700;
+}
+.icono:hover { border-color: var(--acento); }
+
+/* ---------- escena ---------- */
+.escena {
+  position: relative; z-index: 1; flex: 1;
+  display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 20px;
+  width: 100%; max-width: 760px; margin: 0 auto; padding-block: 20px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* medidor de profundidad */
+.medidor { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.columna {
+  position: relative; flex: 1; width: 100%; min-height: 380px;
+  border-radius: 14px; border: 1px solid var(--linea);
+  background: linear-gradient(180deg, rgba(120, 210, 255, .25), rgba(0, 0, 0, .55));
+  overflow: hidden;
+}
+.tramo { position: absolute; inset: 18px 0 40px; }
+.marcas { position: absolute; inset: 0; }
+.marca { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255, 255, 255, .18); }
+.marca span { position: absolute; right: 6px; top: -8px; font-size: 10px; color: var(--tenue); font-variant-numeric: tabular-nums; }
+.buzo {
+  position: absolute; left: 6px; top: 0; font-size: 28px; line-height: 1;
+  transform: translateY(-50%);
+  transition: top 1s cubic-bezier(.3, .9, .3, 1);
+  filter: drop-shadow(0 0 6px rgba(127, 247, 255, .5));
+}
+.fondo-marino {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 34px;
+  background: linear-gradient(180deg, #3a2a1a, #1d140c);
+  font-size: 14px; text-align: center; line-height: 34px; letter-spacing: 2px;
+}
+.lectura { font-variant-numeric: tabular-nums; }
+.lectura strong { font-size: 26px; }
+.lectura span { color: var(--tenue); margin-left: 3px; }
+
+/* panel */
+.panel {
+  background: var(--panel); border: 1px solid var(--linea); border-radius: 18px;
+  padding: 22px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  align-self: start;
+}
+.vista h2 { margin: 4px 0 12px; font-size: 26px; line-height: 1.2; }
+.vista p { line-height: 1.5; color: #d4eaf8; }
+.subtitulo { margin: 0; color: var(--acento) !important; font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+
+.primario, .secundario {
+  border-radius: 999px; padding: 12px 22px; font-weight: 700; border: 0;
+}
+.primario { background: var(--acento); color: #032a33; }
+.primario:hover { filter: brightness(1.1); }
+.secundario { background: transparent; border: 1px solid var(--linea); }
+.secundario:hover { border-color: var(--acento); }
+.modos { display: grid; gap: 10px; margin-top: 8px; }
+.modos button { width: 100%; font-size: 17px; }
+.nota-modo { font-size: 13px; color: var(--tenue) !important; margin-bottom: 0; }
+.oxigeno { font-weight: 700; color: var(--acento); letter-spacing: .1em; }
+.oxigeno .vacia { color: var(--fallo); }
+.enlace { display: block; margin: 16px auto 0; background: none; border: 0; color: var(--tenue); text-decoration: underline; font-size: 14px; }
+.enlace:hover { color: var(--texto); }
+.columna.sin-fondo .fondo-marino { display: none; }
+.columna.sin-fondo .tramo { bottom: 18px; }
+#textoCompartir { width: 100%; resize: none; padding: 12px; border-radius: 10px; border: 1px solid var(--linea); background: rgba(0, 0, 0, .3); font: 15px/1.5 ui-monospace, monospace; }
+
+/* tabla de zonas */
+.zonas { list-style: none; padding: 0; margin: 14px 0; display: grid; gap: 6px; }
+.zonas li {
+  display: grid; grid-template-columns: 28px 1fr auto; column-gap: 8px; align-items: center;
+  padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, .04);
+  border-left: 3px solid var(--c, var(--acento));
+}
+.zonas li span { font-size: 20px; grid-row: span 2; }
+.zonas li small { grid-column: 2; color: var(--tenue); font-size: 12px; }
+.zonas li em { grid-row: 1 / span 2; grid-column: 3; font-style: normal; font-weight: 800; color: var(--c); font-variant-numeric: tabular-nums; }
+.z-soleada { --c: var(--soleada); }
+.z-crepuscular { --c: var(--crepuscular); }
+.z-medianoche { --c: var(--medianoche); }
+.z-abisal { --c: var(--abisal); }
+.z-perla { --c: var(--perla); }
+.z-fallo { --c: var(--fallo); }
+
+/* partida */
+.progreso { display: flex; justify-content: space-between; align-items: center; color: var(--tenue); font-size: 14px; }
+.etiqueta { background: rgba(79, 227, 214, .15); color: var(--acento); padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pregunta { font-size: clamp(26px, 6vw, 36px) !important; margin: 14px 0 18px !important; }
+.reloj { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.reloj .barra {
+  flex: 1; height: 8px; border-radius: 99px; background: var(--acento);
+  transform-origin: left; transition: transform .1s linear, background .3s;
+  box-shadow: 0 0 10px rgba(79, 227, 214, .5);
+}
+.reloj .barra.urgente { background: #ff6b6b; box-shadow: 0 0 10px rgba(255, 107, 107, .6); }
+.reloj span { width: 2ch; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.respuesta { display: flex; gap: 8px; }
+.respuesta input {
+  flex: 1; min-width: 0; padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--linea); background: rgba(0, 0, 0, .3); outline: none; font-size: 18px;
+}
+.respuesta input:focus { border-color: var(--acento); }
+.sacudir { animation: sacudir .35s; }
+@keyframes sacudir {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.aviso { min-height: 1.5em; color: #ffb4b4 !important; font-size: 14px; margin: 8px 0 0; }
+
+.resultado {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 4px 14px; align-items: center;
+  padding: 16px; border-radius: 14px; border: 1px solid var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  animation: aparecer .35s ease-out;
+}
+.resultado .emoji { font-size: 40px; }
+.resultado .zona { font-weight: 800; color: var(--c); font-size: 18px; }
+.resultado .detalle { color: #d4eaf8; font-size: 14px; }
+.resultado .metros { font-size: 26px; font-weight: 800; color: var(--c); font-variant-numeric: tabular-nums; }
+.resultado button { grid-column: 1 / -1; margin-top: 12px; }
+.resultado.brillo { box-shadow: 0 0 30px color-mix(in srgb, var(--perla) 45%, transparent); }
+@keyframes aparecer { from { opacity: 0; transform: translateY(10px); } }
+
+/* final */
+.fin-texto { margin-top: 0; }
+.resumen { list-style: none; padding: 0; margin: 16px 0; display: grid; gap: 8px; }
+.resumen li {
+  padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .04);
+  border-left: 3px solid var(--c);
+}
+.r-preg { font-size: 12px; color: var(--tenue); text-transform: uppercase; letter-spacing: .05em; }
+.r-resp { font-weight: 700; margin: 2px 0; }
+.r-resp em { font-style: normal; color: var(--c); margin-left: 6px; }
+.r-perla { font-size: 13px; color: var(--perla); }
+.botones { display: flex; gap: 10px; flex-wrap: wrap; }
+.botones button { flex: 1; min-width: 140px; }
+.proxima { text-align: center; color: var(--tenue) !important; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+/* diálogos */
+.dialogo {
+  max-width: 460px; width: calc(100% - 32px); border: 1px solid var(--linea); border-radius: 18px;
+  background: #061a2e; color: var(--texto); padding: 22px;
+}
+.dialogo::backdrop { background: rgba(0, 8, 18, .7); }
+.dialogo h2 { margin-top: 0; }
+.dialogo p { line-height: 1.5; color: #d4eaf8; }
+.dialogo .primario { width: 100%; margin-top: 8px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.stats h3 { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--tenue); }
+.stats div { text-align: center; padding: 12px 4px; border-radius: 12px; background: rgba(255, 255, 255, .05); }
+.stats strong { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 12px; color: var(--tenue); }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 10;
+  background: #eaf6ff; color: #04223a; padding: 10px 18px; border-radius: 999px; font-weight: 700;
+}
+
+/* móvil */
+@media (max-width: 560px) {
+  .escena { grid-template-columns: 56px minmax(0, 1fr); gap: 12px; padding-block: 14px 20px; }
+  .columna { min-height: 320px; }
+  .marca span { font-size: 9px; right: 3px; }
+  .buzo { font-size: 22px; left: 2px; }
+  .lectura strong { font-size: 18px; }
+  .panel { padding: 16px; }
+  .respuesta { flex-direction: column; }
+  .resultado { grid-template-columns: auto 1fr; }
+  .resultado .emoji { grid-row: span 2; font-size: 34px; }
+  .resultado .metros { grid-column: 2; font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .burbujas { display: none; }
+  * { animation: none !important; transition: none !important; }
+}
+
+</style>
+<div class="burbujas" aria-hidden="true"></div>
+
+  <header class="cabecera">
+    <span class="volver"></span>
+    <h1>ABYSS</h1>
+    <div class="acciones">
+      <button type="button" id="btnStats" class="icono" title="Estadísticas" aria-label="Estadísticas">📊</button>
+      <button type="button" id="btnAyuda" class="icono" title="Cómo se juega" aria-label="Cómo se juega">?</button>
+    </div>
+  </header>
+
+  <main class="escena">
+    <!-- Medidor de profundidad -->
+    <aside class="medidor" aria-label="Profundidad">
+      <div class="columna">
+        <div class="tramo">
+          <div class="marcas" id="marcas"></div>
+          <div class="buzo" id="buzo">🤿</div>
+        </div>
+        <div class="fondo-marino" aria-hidden="true">🪸🦀🐚</div>
+      </div>
+      <div class="lectura"><strong id="profundidad">0</strong><span>m</span></div>
+    </aside>
+
+    <section class="panel">
+      <!-- Inicio -->
+      <div id="vistaInicio" class="vista">
+        <p class="subtitulo" id="numInmersion">Inmersión #1</p>
+        <h2>One in an Abyss</h2>
+        <p>Eres un buzo y el fondo del mar está a <strong>1000 m</strong>. Para bajar tienes que responder
+          <strong>7 preguntas</strong>, con <strong>25 segundos</strong> para cada una.</p>
+        <p>Aquí no gana la respuesta más popular: <strong>cuanto más rara sea, más bajas</strong>.</p>
+        <ul class="zonas" id="tablaZonas"></ul>
+        <div class="modos">
+          <button type="button" id="btnEmpezar" class="primario">Inmersión del día 🤿</button>
+          <button type="button" id="btnIlimitado" class="secundario">Modo ilimitado ♾️</button>
+        </div>
+        <p class="nota-modo">Modo ilimitado: preguntas sin fin y sin fondo. Tienes 3 bombonas de oxígeno y cada pregunta sin respuesta gasta una.</p>
+      </div>
+
+      <!-- Partida -->
+      <div id="vistaJuego" class="vista" hidden>
+        <div class="progreso">
+          <span id="numPregunta">Pregunta 1/7</span>
+          <span id="oxigeno" class="oxigeno" hidden></span>
+          <span id="modo" class="etiqueta" hidden>Ilimitado</span>
+        </div>
+        <h2 id="pregunta" class="pregunta"></h2>
+        <div class="reloj"><div id="barraTiempo" class="barra"></div><span id="segundos">25</span></div>
+
+        <form id="formRespuesta" class="respuesta" autocomplete="off">
+          <input id="entrada" type="text" maxlength="40" placeholder="Escribe tu respuesta…" autocapitalize="off" spellcheck="false" enterkeyhint="send">
+          <button type="submit" class="primario">Bucear</button>
+        </form>
+        <p id="aviso" class="aviso" role="status" aria-live="polite"></p>
+
+        <div id="resultado" class="resultado" hidden>
+          <div class="emoji" id="resEmoji"></div>
+          <div>
+            <div class="zona" id="resZona"></div>
+            <div class="detalle" id="resDetalle"></div>
+          </div>
+          <div class="metros" id="resMetros"></div>
+          <button type="button" id="btnSiguiente" class="primario">Seguir bajando ↓</button>
+        </div>
+        <button type="button" id="btnTerminar" class="enlace" hidden>Salir a la superficie</button>
+      </div>
+
+      <!-- Final -->
+      <div id="vistaFinal" class="vista" hidden>
+        <p class="subtitulo" id="finSub"></p>
+        <h2 id="finTitulo"></h2>
+        <p id="finTexto" class="fin-texto"></p>
+        <ol id="resumen" class="resumen"></ol>
+        <div class="botones">
+          <button type="button" id="btnCompartir" class="primario">Compartir</button>
+          <button type="button" id="btnIlimitadoFin" class="secundario">Modo ilimitado ♾️</button>
+          <button type="button" id="btnDiaria" class="secundario" hidden>Inmersión del día</button>
+        </div>
+        <p class="proxima" id="proxima"></p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dlgAyuda" class="dialogo">
+    <form method="dialog">
+      <h2>Cómo se juega</h2>
+      <p>Cada día hay una nueva inmersión con <strong>7 preguntas</strong>, la misma para todos.
+        Tienes <strong>25 segundos</strong> para escribir una respuesta válida a cada una.</p>
+      <p>Según lo rara que sea tu respuesta dentro del registro de respuestas válidas, bajarás más o menos metros:</p>
+      <ul class="zonas" id="tablaZonas2"></ul>
+      <p>En cada pregunta hay <strong>una sola respuesta</strong> que vale 143 m: el <strong>One in an Abyss</strong> 💎.
+        Solo si encuentras las 7 tocarás el fondo, a 1000 m.</p>
+      <p>Si escribes algo que no está en el registro puedes probar otra vez, mientras quede tiempo.
+        Se aceptan respuestas sin tildes, en singular o plural y con una pequeña errata.</p>
+      <p><strong>Modo ilimitado ♾️</strong>: juega cuando quieras, aparte de la inmersión del día. Las preguntas no se acaban
+        y el abismo no tiene fondo. Empiezas con 3 bombonas de oxígeno y cada pregunta que se queda sin respuesta gasta una.
+        ¿Hasta dónde llegas?</p>
+      <button class="primario" value="ok">¡A bucear!</button>
+    </form>
+  </dialog>
+
+  <dialog id="dlgStats" class="dialogo">
+    <form method="dialog">
+      <h2>Estadísticas</h2>
+      <div class="stats" id="stats"></div>
+      <button class="primario" value="ok">Cerrar</button>
+    </form>
+  </dialog>
+
+  <dialog id="dlgCompartir" class="dialogo">
+    <form method="dialog">
+      <h2>Compartir resultado</h2>
+      <p>Copia este texto y pégalo donde quieras:</p>
+      <textarea id="textoCompartir" rows="5" readonly></textarea>
+      <button class="primario" value="ok">Hecho</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+<script type="module">
+// Banco de preguntas de ABYSS.
+// Cada pregunta tiene cuatro zonas de rareza (de más común a más rara) y una única «perla»:
+// la respuesta «One in an Abyss», que vale 143 m.
+// Las variantes de una misma respuesta se separan con «|» (la primera es la que se muestra).
+// Las respuestas se comparan sin mayúsculas, sin tildes y sin artículos, y aceptan singular/plural.
+
+const PREGUNTAS = [
+  {
+    q: 'Una fruta',
+    perla: 'camu camu',
+    z: [
+      'manzana, plátano|banana|banano, naranja, fresa|frutilla, pera, uva, sandía, melón, piña|ananá, mango',
+      'kiwi, cereza, limón, durazno|melocotón, mandarina, papaya, coco, ciruela, frambuesa, arándano, higo, granada, mora',
+      'maracuyá|parchita|fruta de la pasión, guayaba, lichi|litchi, chirimoya, níspero, caqui|kaki|persimón, pomelo|toronja, membrillo, grosella, lima, carambola, tamarindo, guanábana, zarzamora, nectarina, albaricoque|chabacano|damasco',
+      'pitahaya|pitaya|fruta del dragón, rambután, mangostán, feijoa, kumquat|quinoto, durián, jaca|yaca, lúcuma, mamey, pomarrosa, zapote, tuna|higo chumbo, physalis|aguaymanto|uchuva, noni, cupuazú, borojó, naranjilla|lulo, jabuticaba, salak',
+    ],
+  },
+  {
+    q: 'Un animal del océano',
+    perla: 'pulpo dumbo',
+    z: [
+      'tiburón, ballena, delfín, pulpo, pez, medusa, estrella de mar',
+      'orca, foca, tortuga, calamar, cangrejo, langosta, caballito de mar, raya, mantarraya|manta, pez payaso, morsa, león marino|lobo marino, camarón|gamba, coral',
+      'narval, manatí, beluga, pez espada, barracuda, morena, anguila, pez globo, erizo de mar|erizo, mejillón, ostra, almeja, nautilo, sepia, tiburón martillo|pez martillo, atún, sardina, krill, dugongo, cachalote',
+      'pez remo, pez linterna, rape|pez abisal, quimera, nudibranquio, pez luna|mola, pepino de mar|holoturia, isópodo gigante|isópodo, calamar gigante, tiburón duende, pez hacha, sifonóforo, tiburón de groenlandia, pez gota, pez dragón, cangrejo yeti',
+    ],
+  },
+  {
+    q: 'Un instrumento musical',
+    perla: 'nyckelharpa',
+    z: [
+      'guitarra, piano, batería, violín, flauta',
+      'trompeta, saxofón|saxo, bajo, ukelele, arpa, violonchelo|chelo|cello, clarinete, tambor, acordeón, teclado, armónica, maracas',
+      'contrabajo, oboe, fagot, trombón, tuba, viola, xilófono, marimba, banjo, mandolina, gaita, charango, cajón, bongó|bongos, castañuelas, triángulo, pandereta, timbal|timbales, órgano, sintetizador, claves, güiro, quena, platillos, trompa|corno, conga|congas, bandoneón',
+      'theremín|theremin, sitar, didgeridoo|didyeridú, kalimba, cuatro, laúd, zampoña, ocarina, clavecín, celesta, handpan|hang, tabla, koto, shamisen, balalaika, erhu, cavaquinho, berimbau, glockenspiel, vibráfono, birimbao|arpa de boca, txalaparta, cornamusa',
+    ],
+  },
+  {
+    q: 'Un color',
+    perla: 'glauco',
+    z: [
+      'rojo, azul, verde, amarillo, negro, blanco',
+      'morado|violeta|púrpura, naranja|anaranjado, rosa|rosado, gris, marrón|café, celeste',
+      'turquesa, beige, dorado, plateado, fucsia, lila, granate|bordó, cian, magenta, ocre, crema, salmón, coral, índigo, esmeralda, mostaza, oliva|verde oliva, lavanda, burdeos, añil, caqui',
+      'bermellón, carmesí, cerúleo, ámbar, siena, cobalto|azul cobalto, ultramar|azul ultramar, aguamarina, chartreuse, malva, escarlata, sepia, bermejo, gualda, cárdeno, zafiro',
+    ],
+  },
+  {
+    q: 'Un deporte',
+    perla: 'ajedrez boxeo|chessboxing',
+    z: [
+      'fútbol, baloncesto|básquet|básquetbol, tenis, natación, voleibol|vóley',
+      'béisbol, golf, boxeo, ciclismo, atletismo, rugby, balonmano|handball, hockey, surf, esquí, pádel, kárate, judo',
+      'esgrima, remo, polo, críquet|cricket, waterpolo, escalada, lucha, gimnasia, taekwondo, triatlón, patinaje, snowboard, bádminton, bolos, squash, tiro con arco, halterofilia, softbol, parkour, buceo, vela, piragüismo|canoa|kayak',
+      'curling, sepak takraw, hurling, lacrosse, kabaddi, pelota vasca|frontón, jai alai, bobsleigh, skeleton, korfball, ultimate, petanca, pentatlón, biatlón, luge, croquet, quidditch, sumo, hockey subacuático',
+    ],
+  },
+  {
+    q: 'Algo que hay en una cocina',
+    perla: 'pasapurés',
+    z: [
+      'nevera|refrigerador|refri|heladera|frigorífico, horno, estufa|cocina, cuchillo, plato, olla, sartén',
+      'microondas, tenedor, cuchara, vaso, taza, fregadero|lavaplatos|pila, licuadora|batidora, tostadora, cafetera, mesa, silla, lavavajillas, servilleta, trapo',
+      'rallador, colador, espátula, cucharón, tabla de cortar, abrelatas, sacacorchos, delantal, especiero, batidor|varillas, rodillo, jarra, tetera, freidora, campana|extractor, despensa, alacena, salero, molinillo',
+      'mortero|molcajete, mandolina, tamiz, pelapapas|pelador, embudo, termómetro, manga pastelera, wok, comal, cascanueces, prensa ajos|prensador de ajos, soplete, chaira, olla exprés|olla a presión, tajín|tajine, cuscusera, paellera, temporizador',
+    ],
+  },
+  {
+    q: 'Un país de Europa',
+    perla: 'Liechtenstein',
+    z: [
+      'España, Francia, Italia, Alemania, Portugal, Inglaterra|Reino Unido',
+      'Grecia, Suiza, Bélgica, Holanda|Países Bajos, Suecia, Noruega, Rusia, Irlanda, Polonia, Austria, Dinamarca, Finlandia',
+      'Croacia, Hungría, Rumanía|Rumania, República Checa|Chequia, Ucrania, Islandia, Escocia, Serbia, Bulgaria, Turquía, Luxemburgo, Eslovaquia, Eslovenia, Albania, Estonia, Letonia, Lituania, Mónaco, Andorra, Malta, Chipre',
+      'San Marino, Vaticano|Ciudad del Vaticano, Moldavia, Bielorrusia, Macedonia del Norte|Macedonia, Montenegro, Bosnia y Herzegovina|Bosnia, Kosovo, Gales, Georgia, Armenia, Azerbaiyán',
+    ],
+  },
+  {
+    q: 'Algo que encuentras en una playa',
+    perla: 'bolsa de sirena|huevo de raya',
+    z: [
+      'arena, agua, mar, sol, conchas, toalla, sombrilla',
+      'olas, gaviota, castillo de arena, cangrejo, piedras, salvavidas, bañador|traje de baño|malla, protector solar|bloqueador|crema solar, palmera, pelota, cubo|balde, pala',
+      'algas, medusa, chiringuito, hamaca|tumbona, faro, muelle, barco, velero, surfista, roca, caracola, estrella de mar, chanclas|sandalias|chancletas, gafas de sol|lentes de sol, nevera portátil|hielera, cometa|papalote|barrilete, tabla de surf',
+      'mensaje en una botella|botella con mensaje, vidrio de mar|cristal de mar, ámbar gris, madera a la deriva, duna, erizo, cangrejo ermitaño, socorrista, pulga de mar, piedra pómez, nido de tortuga, detector de metales, tesoro, naufragio, ancla, fósil',
+    ],
+  },
+  {
+    q: 'Un animal de granja',
+    perla: 'capón',
+    z: [
+      'vaca, cerdo|chancho|puerco|cochino, gallina, caballo, oveja',
+      'cabra, pato, conejo, gallo, burro|asno, pollo, perro, gato, toro, pavo|guajolote',
+      'ganso|oca, mula, cordero, ternero|becerro, codorniz, pavo real, buey, yegua, poni|pony, llama, alpaca, lechón',
+      'búfalo, avestruz, gallina de guinea|pintada, emú, cuy|cobaya|conejillo de indias, abeja, caracol, yak, faisán, ciervo, chinchilla, gusano de seda, camello, dromedario',
+    ],
+  },
+  {
+    q: 'Una profesión',
+    perla: 'farero',
+    z: [
+      'médico|doctor, profesor|maestro, abogado, bombero, policía, ingeniero',
+      'enfermero, cocinero|chef, arquitecto, dentista, veterinario, piloto, carpintero, panadero, mecánico, electricista, contador|contable, periodista, actor, cantante, músico',
+      'fontanero|plomero, psicólogo, farmacéutico, peluquero, albañil, astronauta, cartero, jardinero, sastre, carnicero, pescadero, agricultor|granjero, bibliotecario, fotógrafo, escritor, traductor, programador, juez, notario, taxista, camarero|mesero, fisioterapeuta, cirujano, biólogo',
+      'herrero, relojero, zapatero, apicultor, cerrajero, deshollinador, sumiller|sommelier, lutier|luthier, taxidermista, oceanógrafo, vulcanólogo, actuario, joyero, tonelero, ebanista, curtidor, buzo, archivero, florista, alfarero, guardabosques, enólogo, cartógrafo',
+    ],
+  },
+  {
+    q: 'Algo que vuela',
+    perla: 'colugo|lémur volador',
+    z: [
+      'avión, pájaro|ave, mosca, helicóptero, mariposa',
+      'cometa|papalote|barrilete, globo, abeja, murciélago, mosquito, águila, dron, cohete, paloma, avispa',
+      'libélula, avioneta, parapente, ala delta, zepelín|dirigible, polilla, colibrí, halcón, búho|lechuza, gaviota, hoja, avión de papel, ovni|platillo volante, nave espacial, cóndor, saltamontes, mariquita|catarina, globo aerostático, frisbee|disco volador',
+      'ardilla voladora, pez volador, diente de león, semilla de arce, polen, ceniza, pluma, autogiro, bumerán|boomerang, satélite, vencejo, albatros, pterodáctilo, alfombra mágica, escoba, dragón',
+    ],
+  },
+  {
+    q: 'Algo redondo',
+    perla: 'ojo de buey',
+    z: [
+      'pelota|balón, sol, luna, rueda, plato, moneda',
+      'naranja, reloj, anillo, botón, pizza, globo, galleta, planeta, tierra, ojo, disco|cd, dona|donut|rosquilla',
+      'aro, volante, tambor, tortilla, sandía, burbuja, perla, canica, cebolla, tomate, lenteja, guisante|arveja|chícharo, globo terráqueo, brújula, tapa, sombrero',
+      'rotonda|glorieta, escotilla, iris, pupila, gota, mandala, lente, pandero, frisbee, hula hula|ula ula, neumático, pozo, arandela, engranaje, aceituna, garbanzo, uva, bola de nieve',
+    ],
+  },
+  {
+    q: 'Algo que pica',
+    perla: 'fibra de vidrio',
+    z: [
+      'chile|ají|picante, abeja, mosquito, pimienta',
+      'avispa, ortiga, jalapeño, salsa, wasabi, mostaza, hormiga, pulga, piojo',
+      'rábano, jengibre, ajo, cebolla, tabasco, habanero, alacrán|escorpión, medusa, sarna, lana, araña, pimentón, cayena, curry, chinche',
+      'rábano picante, sarpullido|erupción, urticaria, garrapata, tábano, jején, guindilla, chipotle, sriracha, harissa, pimienta de sichuan, varicela, pez escorpión, pez piedra',
+    ],
+  },
+  {
+    q: 'Algo que se lleva en la cabeza',
+    perla: 'escafandra',
+    z: [
+      'gorra, sombrero, casco',
+      'gorro, diadema|cintillo|vincha, pañuelo, boina, corona, gafas|lentes, auriculares|cascos, peluca',
+      'turbante, capucha, velo, tiara, bandana, pasamontañas, visera, sombrero de copa, gorro de baño, orejeras, gorro de lana',
+      'bombín, chistera, fez, kipá, mitra, sombrero de paja, panamá, sombrero vueltiao, chupalla, birrete, yelmo, tocado, mantilla, sueste',
+    ],
+  },
+  {
+    q: 'Un postre',
+    perla: 'zabaione|sabayón',
+    z: [
+      'helado, pastel|tarta|torta, flan, galletas',
+      'brownie, tiramisú, gelatina, arroz con leche, churros, natillas, tarta de queso|cheesecake, mousse, crepa|crepe|panqueque, dona|donut',
+      'tres leches, profiteroles, alfajor, merengue, magdalena|muffin|cupcake, macedonia|ensalada de frutas, bizcocho, budín|pudin, sorbete, cuajada, leche frita, torrijas, banana split, crema catalana|creme brulee, panna cotta, baklava, strudel, crumble',
+      'pavlova, tarta tatin, sacher, selva negra, brigadeiro, suspiro limeño, mazamorra, cocada, picarones, quesillo, mochi, cannoli, kulfi, gulab jamun, carlota, bienmesabe, dulce de leche',
+    ],
+  },
+  {
+    q: 'Un animal con rayas',
+    perla: 'tilacino|lobo de tasmania|tigre de tasmania',
+    z: [
+      'cebra, tigre',
+      'abeja, mapache, zorrillo|mofeta, pez payaso, serpiente, gato, avispa',
+      'okapi, lémur, ardilla, tejón, pez cirujano, coralillo|serpiente coral, hiena, lagartija, oruga, pez león, tapir, ardilla listada|chipmunk',
+      'numbat, bongo, kudú, nyala, quagga, cebra de grevy, perca, pez ángel, chinche, escarabajo de la papa, pez tigre',
+    ],
+  },
+  {
+    q: 'Algo que tiene teclas o botones',
+    perla: 'pianola',
+    z: [
+      'teclado, piano, teléfono|móvil|celular, control remoto|mando',
+      'computadora|ordenador, calculadora, ascensor|elevador, microondas, camisa, chaqueta, reloj, consola, cámara',
+      'acordeón, máquina de escribir, cajero automático, lavadora, radio, abrigo, timbre, impresora, sintetizador, caja registradora, pantalón, teléfono fijo',
+      'saxofón, clarinete, órgano, telégrafo, caja fuerte, interfono|portero automático, bandoneón, clavecín, fax, tamagotchi, botonera, mando de la tele',
+    ],
+  },
+  {
+    q: 'Un idioma',
+    perla: 'silbo gomero',
+    z: [
+      'inglés, español|castellano, francés, chino|mandarín',
+      'alemán, italiano, portugués, japonés, ruso, árabe, coreano',
+      'catalán, euskera|vasco, gallego, griego, latín, hindi, turco, neerlandés|holandés, sueco, polaco, hebreo, quechua, guaraní, náhuatl, esperanto, noruego, danés',
+      'sánscrito, suajili|swahili, aimara|aymara, mapudungun, maya, tagalo, vietnamita, tailandés, persa|farsi, urdu, bengalí, gaélico, islandés, finlandés, húngaro, klingon, élfico|quenya|sindarin, zulú, amhárico, maorí, wayuunaiki, occitano, asturiano|bable, yidis|yiddish',
+    ],
+  },
+  {
+    q: 'Una parte del cuerpo',
+    perla: 'filtrum|surco nasolabial',
+    z: [
+      'mano, pie, cabeza, brazo, pierna, ojo, boca, nariz',
+      'oreja, dedo, rodilla, codo, corazón, cuello, espalda, hombro, estómago|barriga|panza, pelo|cabello, uña, diente, lengua',
+      'tobillo, muñeca, ceja, pestaña, hígado, riñón, pulmón, cerebro, columna, cadera, mejilla, barbilla|mentón, frente, labio, ombligo, talón, pantorrilla, muslo, costilla, cráneo, piel',
+      'clavícula, esternón, tibia, peroné, fémur, rótula, coxis, apéndice, páncreas, bazo, tímpano, yunque, estribo, úvula|campanilla, epiglotis, axila|sobaco, nuca, lóbulo, iris, córnea, retina, tendón de aquiles, diafragma, esófago, tráquea',
+    ],
+  },
+  {
+    q: 'Algo de color amarillo',
+    perla: 'submarino amarillo|yellow submarine',
+    z: [
+      'sol, plátano|banana, limón, pollito, queso',
+      'maíz|elote|choclo, taxi, girasol, yema, mostaza, oro, patito de goma|pato de goma, estrella, mantequilla',
+      'canario, abeja, autobús escolar, piña, semáforo, lápiz, pikachu, simpson|los simpson, minion, post-it, mango, tulipán, margarita',
+      'azufre, narciso, diente de león, mimosa, ámbar, cúrcuma, azafrán, caléndula, citrino, rana dorada, pez cirujano amarillo, bob esponja',
+    ],
+  },
+  {
+    q: 'Algo que hay en el fondo del mar',
+    perla: 'nieve marina',
+    z: [
+      'arena, peces, algas, coral, piedras|rocas',
+      'conchas, naufragio|barco hundido, tesoro, estrella de mar, pulpo, cangrejo, ancla, basura, erizo',
+      'cofre, esponja, anémona, volcán, cueva, perla, ostra, submarino, cable submarino|cables, raya, buzo, plástico',
+      'fosa|fosa de las marianas, fumarola|chimenea hidrotermal, nódulos de manganeso|nódulo, isópodo, pepino de mar|holoturia, sedimento, lava, atlántida, titanic, kraken, caída de ballena|ballena muerta, gusano tubícola',
+    ],
+  },
+  {
+    q: 'Una ciudad de Latinoamérica',
+    perla: 'Puerto Williams',
+    z: [
+      'Ciudad de México|México|CDMX, Buenos Aires, Bogotá, Lima, Santiago',
+      'Caracas, Quito, Montevideo, La Habana|Habana, Río de Janeiro, São Paulo|Sao Paulo, Medellín, Guadalajara, Cancún, Panamá, San José',
+      'Cali, Cartagena, Monterrey, Córdoba, Rosario, Valparaíso, Cusco|Cuzco, La Paz, Asunción, Guayaquil, Santo Domingo, San Juan, Tegucigalpa, Managua, San Salvador, Guatemala, Puebla, Mendoza, Arequipa, Brasilia, Salvador de Bahía, Oaxaca, Tijuana, Barranquilla, Maracaibo, Sucre',
+      'Ushuaia, Iquitos, Potosí, Valdivia, Punta Arenas, Cuenca, Popayán, Mompox, Colonia del Sacramento, Mérida, Valladolid, Antigua, Granada, León, Trinidad, Manaos, Belém, Florianópolis, Recife, Ouro Preto, San Cristóbal de las Casas, Tulum, Salta, Jujuy, Cochabamba, Santa Cruz, Encarnación, Paramaribo, Cayena, Georgetown',
+    ],
+  },
+  {
+    q: 'Un dinosaurio o animal prehistórico',
+    perla: 'hallucigenia',
+    z: [
+      'tiranosaurio|t rex|tiranosaurio rex, velociraptor|raptor, triceratops',
+      'brontosaurio, diplodocus, estegosaurio, pterodáctilo, mamut, braquiosaurio, megalodón',
+      'espinosaurio, anquilosaurio, parasaurolofus, alosaurio, iguanodonte, tigre dientes de sable|dientes de sable|smilodon, plesiosaurio, mosasaurio, ictiosaurio, carnotauro|carnotaurus, argentinosaurio, gigantosaurio|giganotosaurus, dilofosaurio, paquicefalosaurio, compsognathus',
+      'trilobites|trilobite, amonite|amonita, dimetrodon, arqueoptérix|archaeopteryx, quetzalcoatlus, terizinosaurio|therizinosaurus, oviraptor, troodon, baryonyx, dunkleosteus, anomalocaris, titanoboa, megaterio, gliptodonte, ceratosaurio, amargasaurio, mapusaurio, celacanto',
+    ],
+  },
+  {
+    q: 'Una flor',
+    perla: 'rafflesia|flor cadáver',
+    z: [
+      'rosa, margarita, girasol, tulipán',
+      'orquídea, lirio, clavel, jazmín, violeta, lavanda, amapola, azucena, hortensia',
+      'dalia, geranio, petunia, gardenia, magnolia, camelia, crisantemo, loto|flor de loto, flor de cerezo|sakura, buganvilla|bugambilia, narciso, begonia, lila, gladiolo, iris, diente de león, nardo, cempasúchil|flor de muerto, azalea, peonía',
+      'edelweiss|flor de nieve, protea, ave del paraíso|estrelitzia, nomeolvides, anémona, malva, aster, zinnia, fresia, ranúnculo, alhelí, heliconia, jacinto, flor de pascua|nochebuena|poinsettia, adelfa, dedalera|digital, cantuta, copihue, ceibo, pasionaria',
+    ],
+  },
+  {
+    q: 'Algo que hay en un baño',
+    perla: 'piedra pómez',
+    z: [
+      'inodoro|váter|retrete|taza, ducha|regadera, lavabo|lavamanos, espejo, toalla, jabón, papel higiénico',
+      'bañera|tina, cepillo de dientes, pasta de dientes|dentífrico, champú, peine, cortina, grifo|llave|canilla, alfombra, secador',
+      'bidé|bidet, esponja, cuchilla de afeitar|maquinilla|rastrillo, desodorante, perfume|colonia, hilo dental, botiquín, escobilla, desatascador|destapador|chupón, báscula|balanza, crema, algodón, bastoncillos|hisopos|cotonetes, enjuague bucal, gel, patito de goma, ambientador',
+      'toallero, mampara, sifón, cesto de la ropa, pinzas, cortaúñas, lima de uñas, extractor, tapón, cisterna|tanque, rejilla, azulejo, moho, alcachofa',
+    ],
+  },
+  {
+    q: 'Algo que tiene alas',
+    perla: 'nariz',
+    z: [
+      'avión, pájaro|ave, mariposa, ángel',
+      'abeja, murciélago, mosca, dragón, hada, gallina, águila, pegaso',
+      'libélula, polilla, mosquito, avispa, cupido, gárgola, grifo, pingüino, avestruz, pato, cucaracha, hormiga voladora, mariquita, escarabajo',
+      'ala delta, avión de papel, querubín, fénix, esfinge, pterosaurio, hipogrifo, edificio, raya, pez volador, hospital, sombrero',
+    ],
+  },
+  {
+    q: 'Un nombre para un perro',
+    perla: 'Calcetín',
+    z: [
+      'Max, Firulais, Toby|Tobi, Rocky, Luna, Bobby',
+      'Lola, Coco, Nala, Simba, Rex, Lucky, Bruno, Kira, Thor, Chispa, Canela, Manchas, Princesa, Oso, Pelusa',
+      'Zeus, Milo, Frida, Bella, Chloe, Bolt, Scooby, Snoopy, Pluto, Lassie, Beethoven, Peluche, Negro|Negrito, Chocolate, Galleta, Pancho, Mía, Kiara, Dana, Bimba, Sultán, Duque, Hachiko',
+      'Pulgoso, Cacahuate|Cacahuete|Maní, Tofu, Croqueta, Garbanzo, Napoleón, Sherlock, Chewbacca|Chewie, Gandalf, Frodo, Pepinillo, Wasabi, Kafka, Picasso, Mozart, Paquito, Eustaquio, Fideo',
+    ],
+  },
+  {
+    q: 'Algo que se hace con huevos',
+    perla: 'pintura al temple|temple',
+    z: [
+      'tortilla|omelette, huevo frito, pastel|torta|tarta, huevos revueltos',
+      'flan, mayonesa, huevo cocido|huevo duro, merengue, galletas, crepas|crepes, bizcocho, panqueques|hot cakes|tortitas',
+      'huevo pochado|huevo escalfado, natillas, quiche, rompope|ponche de huevo, tortilla de patatas|tortilla española, suflé|souffle, carbonara, pasta, mousse, huevos rancheros, huevos benedictinos, alioli, rebozado|empanizado, buñuelos',
+      'huevo de pascua, cascarones, tamagoyaki, shakshuka, frittata, leche asada, tocino de cielo, yemas de santa teresa, huevos a la flamenca, tempura, mascarilla',
+    ],
+  },
+  {
+    q: 'Algo que se puede romper',
+    perla: 'barrera del sonido',
+    z: [
+      'vaso, plato, corazón, espejo, ventana|vidrio|cristal',
+      'hueso, teléfono|móvil|celular, huevo, promesa, récord, jarrón, botella, lápiz',
+      'silencio, hielo, contrato, dieta, ola, pantalla, uña, cuerda, reloj, gafas|lentes, piñata, nuez, cadena, regla',
+      'hechizo|maleficio|embrujo, empate, tensión, racha, cascarón, techo de cristal, monotonía, rutina, protocolo, alcancía|hucha|chanchito, cuarta pared',
+    ],
+  },
+  {
+    q: 'Un personaje de cuento infantil',
+    perla: 'Piel de Asno',
+    z: [
+      'Caperucita Roja|Caperucita, Cenicienta, Blancanieves, Pinocho',
+      'Lobo Feroz|lobo, Bella Durmiente|Aurora, Peter Pan, Ricitos de Oro, Hansel, Gretel, Rapunzel, Sirenita|Ariel, Patito Feo, Tres Cerditos, Gato con Botas, Aladino',
+      'Pulgarcito, Campanilla|Tinkerbell, Capitán Garfio|Garfio, Alicia, Sombrerero Loco, Conejo Blanco, Bella, Bestia, Genio, Hada Madrina, Rumpelstiltskin, Jack, Príncipe Rana|Rana, Soldadito de Plomo, Juan Sin Miedo, Alí Babá, Reina de las Nieves, Gigante, Bruja',
+      'Barba Azul, Flautista de Hamelín, Gato de Cheshire, Geppetto|Gepetto, Pepito Grillo, Siete Cabritillos, Sastrecillo Valiente, Ratoncito Pérez, Princesa y el Guisante, Vendedora de Fósforos|Cerillera, Pulgarcita, Baba Yaga, Principito, Momo, Dorothy, Hombre de Hojalata, Espantapájaros',
+    ],
+  },
+  {
+    q: 'Algo que da miedo',
+    perla: 'talasofobia|miedo al mar profundo',
+    z: [
+      'fantasma, araña, oscuridad, monstruo, muerte',
+      'serpiente, payaso, tiburón, zombi, bruja, vampiro, altura|alturas, ladrón, cucaracha, tormenta',
+      'rayo, pesadilla, soledad, examen, dentista, sangre, aguja|inyección, mar, abismo, cementerio, muñeca, terremoto, fuego, demonio, coco|hombre del saco, rata, murciélago, avión',
+      'claustrofobia, vacío, futuro, espejo, sótano, tsunami, fracaso, hablar en público, llorona|la llorona, chupacabras, pantano, calamar gigante, kraken, olvido, factura, lunes',
+    ],
+  },
+  {
+    q: 'Una herramienta',
+    perla: 'berbiquí',
+    z: [
+      'martillo, destornillador|desarmador, llave inglesa|llave, alicates|pinzas, sierra',
+      'taladro, clavo, tornillo, cinta métrica|metro|flexómetro, pala, serrucho, tijeras, nivel, lima',
+      'rastrillo, hacha, cincel, lija, soldador, llave allen, tenaza, gato, carretilla, azada, pico, escalera, brocha, pincel, cúter|cutter, sargento, grapadora|engrapadora, pistola de silicona',
+      'escuadra, plomada, gubia, formón, buril, punzón, escoplo, garlopa, cepillo de carpintero, llana, paleta, machete, guadaña, hoz, yunque, fuelle, remachadora, multímetro, pie de rey|calibre, polea, palanca, cizalla',
+    ],
+  },
+  {
+    q: 'Algo que tiene muchas patas',
+    perla: 'illacme|illacme plenipes',
+    z: [
+      'ciempiés, araña, pulpo',
+      'milpiés, cangrejo, cucaracha, hormiga, insecto, escorpión|alacrán, langosta, oruga, mesa',
+      'calamar, estrella de mar, camarón, mosca, escarabajo, cochinilla|bicho bola, garrapata, chinche, saltamontes, ácaro, silla, cama, piano, banco',
+      'tardígrado|oso de agua, peripato|gusano aterciopelado, isópodo, centolla, cangrejo araña, ofiura, tarántula, opilión, escolopendra, taburete, cangrejo de cocotero',
+    ],
+  },
+  {
+    q: 'Algo frío',
+    perla: 'venganza',
+    z: [
+      'hielo, nieve, helado, invierno, nevera|refrigerador|heladera',
+      'polo norte|polo sur, antártida, agua, cubito de hielo|cubito, congelador, granizo, viento, pingüino, refresco|soda, cerveza',
+      'iceberg, glaciar, escarcha, iglú, montaña, granizado|raspado, oso polar, muñeco de nieve, hielo seco, aire acondicionado, ducha fría, metal, Siberia, Alaska, Groenlandia, ventisca, noche',
+      'nitrógeno líquido, cero absoluto, espacio, Plutón, criogenia, permafrost, tundra, carámbano, hielo negro, cadáver, fosa abisal, corazón',
+    ],
+  },
+  {
+    q: 'Una palabra que empieza por Z',
+    perla: 'zozobra',
+    z: [
+      'zapato, zorro, zanahoria, zumo',
+      'zapatilla, zona, zoológico|zoo, zafiro, zigzag, zarza, zombi, zurdo',
+      'zarpa, zodiaco, zueco, zinc, zócalo, zanja, zancudo, zapallo, zarzuela, zarigüeya, zancada, zepelín, zeta, zumbido, zorrillo',
+      'zahorí, zascandil, zafarrancho, zalamero, zaguán, zigurat, zampoña, zurrón, zenit, zoquete, zafra, zarabanda, zulú, zircón, zorzal, zángano, zéjel',
+    ],
+  },
+  {
+    q: 'Algo que brilla',
+    perla: 'noctiluca',
+    z: [
+      'sol, estrella, oro, diamante, luz',
+      'luna, bombilla|foco, linterna, purpurina|brillantina|escarcha, joya, espejo, luciérnaga, plata, fuego, rayo',
+      'ojos, metal, faro, vela, neón, cristal, agua, lámpara, pantalla, cometa, relámpago, zapatos, dientes, lentejuelas, glitter, perla',
+      'aurora boreal, bioluminiscencia, plancton, medusa, pez linterna, rape, calva, fósforo, uranio, kriptonita, hongo, lava, piedra luna, halo, sable de luz|espada láser',
+    ],
+  },
+];
+
+// Lógica pura de ABYSS (sin DOM): normalizar respuestas, puntuar y elegir la inmersión del día.
+
+const PROFUNDIDAD_FONDO = 1000;
+const PREGUNTAS_POR_DIA = 7;
+const SEGUNDOS_POR_PREGUNTA = 25;
+
+// Zonas de menos a más profundas. La última es la perla: «One in an Abyss».
+// 7 perlas × 143 m = 1001 m, pero el fondo está a 1000 m: solo se toca fondo con las 7 perlas
+// (el máximo sin ellas es 6 × 143 + 120 = 978 m).
+const ZONAS = [
+  { id: 'soleada', nombre: 'Zona Soleada', metros: 15, emoji: '🫧', desc: 'respuestas muy comunes' },
+  { id: 'crepuscular', nombre: 'Zona Crepuscular', metros: 45, emoji: '🐠', desc: 'respuestas habituales' },
+  { id: 'medianoche', nombre: 'Zona de Medianoche', metros: 85, emoji: '🦑', desc: 'respuestas poco comunes' },
+  { id: 'abisal', nombre: 'Zona Abisal', metros: 120, emoji: '🐙', desc: 'respuestas rarísimas' },
+  { id: 'perla', nombre: 'One in an Abyss', metros: 143, emoji: '💎', desc: 'la única respuesta perfecta' },
+];
+// Profundidad total de una lista de resultados (el fondo marino no deja bajar más).
+function profundidad(resultados) {
+  return Math.min(PROFUNDIDAD_FONDO, resultados.reduce((s, r) => s + r.metros, 0));
+}
+
+const FALLO = { id: 'fallo', nombre: 'Sin respuesta', metros: 0, emoji: '⬛' };
+
+// Fecha de la primera inmersión (inmersión nº 1).
+const INICIO = Date.UTC(2026, 10, 7);
+const ARTICULOS = /^(el|la|los|las|un|una|unos|unas|lo)\s+/;
+
+function normalizar(texto) {
+  return String(texto)
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(ARTICULOS, '');
+}
+
+function variantes(lista) {
+  return lista.split(',').map((s) => s.trim()).filter(Boolean).map((r) => r.split('|').map((v) => v.trim()));
+}
+
+// Formas singular/plural a probar para una palabra normalizada.
+function formas(w) {
+  const f = [w, w + 's', w + 'es'];
+  if (w.endsWith('es')) f.push(w.slice(0, -2));
+  if (w.endsWith('s')) f.push(w.slice(0, -1));
+  if (w.endsWith('ces')) f.push(w.slice(0, -3) + 'z');
+  if (w.endsWith('z')) f.push(w.slice(0, -1) + 'ces');
+  return f;
+}
+
+function distancia(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return 2;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diag = tmp;
+    }
+  }
+  return prev[b.length];
+}
+
+// Prepara una pregunta: índice de respuestas válidas → { zona, texto mostrado }.
+function prepararPregunta(p) {
+  const indice = new Map();
+  const add = (grupo, zona) => {
+    const mostrado = grupo[0];
+    for (const v of grupo) indice.set(normalizar(v), { zona, texto: mostrado });
+  };
+  p.z.forEach((lista, i) => variantes(lista).forEach((g) => add(g, i)));
+  add(p.perla.split('|').map((v) => v.trim()), 4);
+  return { q: p.q, perla: p.perla.split('|')[0], indice };
+}
+
+// Puntúa una respuesta. Devuelve { zona, texto } o null si no está en el registro.
+function puntuar(pregunta, respuesta) {
+  const w = normalizar(respuesta);
+  if (!w) return null;
+  for (const f of formas(w)) {
+    const hit = pregunta.indice.get(f);
+    if (hit) return hit;
+  }
+  // Tolerancia a una errata en palabras largas (solo si hay una única coincidencia).
+  if (w.length >= 5) {
+    const cand = new Map();
+    for (const [k, v] of pregunta.indice) {
+      if (k.length >= 5 && distancia(w, k) === 1) cand.set(v.texto, v);
+    }
+    if (cand.size === 1) return [...cand.values()][0];
+  }
+  return null;
+}
+
+// --- Inmersión diaria ---
+
+function claveDia(fecha = new Date()) {
+  const y = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function numeroInmersion(clave) {
+  const [y, m, d] = clave.split('-').map(Number);
+  return Math.round((Date.UTC(y, m - 1, d) - INICIO) / 86400000) + 1;
+}
+
+function semilla(texto) {
+  let h = 2166136261;
+  for (const c of texto) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+function aleatorio(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function barajar(n, rnd) {
+  const idx = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+
+// Índices de las preguntas de una clave (todos los jugadores reciben las mismas el mismo día).
+// Recorre el banco en ciclos barajados para no repetir preguntas hasta haberlas usado todas.
+function preguntasDelDia(clave, total) {
+  const n = Math.max(1, numeroInmersion(clave));
+  const porCiclo = Math.floor(total / PREGUNTAS_POR_DIA);
+  const ciclo = Math.floor((n - 1) / porCiclo);
+  const pos = (n - 1) % porCiclo;
+  const orden = barajar(total, aleatorio(semilla('abismo-' + ciclo)));
+  return orden.slice(pos * PREGUNTAS_POR_DIA, (pos + 1) * PREGUNTAS_POR_DIA);
+}
+
+// Orden aleatorio de todo el banco (modo ilimitado: no repite hasta haberlas usado todas).
+function ordenAleatorio(total) {
+  return barajar(total, Math.random);
+}
+
+function textoCompartir(numero, resultados) {
+  const total = profundidad(resultados);
+  const fila = resultados.map((r) => r.emoji).join('');
+  const perlas = resultados.filter((r) => r.zona === 4).length;
+  const titulo = total >= PROFUNDIDAD_FONDO ? '¡Tocó fondo! 🏆' : `${total} m de profundidad`;
+  return `🤿 ABYSS #${numero} · ${titulo}\n${fila}\n💎 ${perlas}/${resultados.length} perlas`;
+}
+
+
+
+const $ = (id) => document.getElementById(id);
+const CLAVE_STORAGE = 'abyss:v2'; // v2: fondo a 1000 m (las partidas de v1 eran a 700 m)
+const BOMBONAS = 3;
+// El script de build pone esto a true en la versión de un solo archivo para artefactos de Claude.
+const EN_ARTEFACTO = true;
+
+// ---------- almacenamiento ----------
+function cargar() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(CLAVE_STORAGE)); } catch { /* sin almacenamiento */ }
+  d = d && typeof d === 'object' ? d : {};
+  d.dias ||= {};
+  d.ilimitado ||= { partidas: 0, record: 0, maxPreguntas: 0 };
+  return d;
+}
+function guardar() {
+  try { localStorage.setItem(CLAVE_STORAGE, JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
+}
+const datos = cargar();
+
+// ---------- estado ----------
+const hoy = claveDia();
+const numero = numeroInmersion(hoy);
+// partida: { modo: 'diaria' | 'ilimitado', ids, preguntas, res, bombonas }
+let partida = null;
+let temporizador = null;
+let limite = 0;
+let respondida = false;
+
+const esIlimitado = () => partida?.modo === 'ilimitado';
+const sumaMetros = (res) => res.reduce((s, r) => s + r.metros, 0);
+// En la diaria el fondo frena en 1000 m; en el modo ilimitado no hay fondo.
+const metrosPartida = () => (esIlimitado() ? sumaMetros(partida.res) : profundidad(partida.res));
+
+// ---------- utilidades de interfaz ----------
+function mostrar(vista) {
+  for (const v of ['vistaInicio', 'vistaJuego', 'vistaFinal']) $(v).hidden = v !== vista;
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; }, 2200);
+}
+
+function tablaZonas(el) {
+  el.innerHTML = ZONAS.map((z) => `<li class="z-${z.id}"><span>${z.emoji}</span><b>${z.nombre}</b><small>${z.desc}</small><em>${z.metros} m</em></li>`).join('');
+}
+
+// Escala del medidor: 1000 m en la diaria; en el ilimitado crece de 1000 en 1000.
+let escala = 0;
+function fijarEscala(metros) {
+  const nueva = esIlimitado() ? Math.max(PROFUNDIDAD_FONDO, Math.ceil((metros + 1) / 1000) * 1000) : PROFUNDIDAD_FONDO;
+  document.querySelector('.columna').classList.toggle('sin-fondo', esIlimitado());
+  if (nueva === escala) return;
+  escala = nueva;
+  let html = '';
+  for (let i = 0; i <= 10; i++) {
+    html += `<div class="marca" style="top:${i * 10}%"><span>${(escala / 10) * i}</span></div>`;
+  }
+  $('marcas').innerHTML = html;
+}
+
+// Mezcla de colores del agua: más oscura cuanto más profundo.
+const COLORES = [[18, 132, 190], [10, 74, 122], [6, 34, 70], [3, 14, 34], [1, 4, 12]];
+function colorAgua(t) {
+  const x = Math.min(0.9999, Math.max(0, t)) * (COLORES.length - 1);
+  const i = Math.floor(x), f = x - i;
+  const c = COLORES[i].map((v, k) => Math.round(v + (COLORES[i + 1][k] - v) * f));
+  return `rgb(${c.join(',')})`;
+}
+
+let profundidadMostrada = 0;
+function fijarProfundidad(metros, animar = true) {
+  fijarEscala(metros);
+  const t = metros / PROFUNDIDAD_FONDO;
+  document.documentElement.style.setProperty('--agua', colorAgua(t));
+  document.documentElement.style.setProperty('--agua-2', colorAgua(Math.min(1, t + 0.18)));
+  $('buzo').style.top = `${Math.min(100, (metros / escala) * 100)}%`;
+  const desde = profundidadMostrada;
+  profundidadMostrada = metros;
+  if (!animar || desde === metros) { $('profundidad').textContent = metros; return; }
+  const inicio = performance.now();
+  const paso = (ahora) => {
+    const p = Math.min(1, (ahora - inicio) / 900);
+    $('profundidad').textContent = Math.round(desde + (metros - desde) * (1 - (1 - p) ** 3));
+    if (p < 1) requestAnimationFrame(paso);
+  };
+  requestAnimationFrame(paso);
+}
+
+function pintarOxigeno() {
+  const llenas = '●'.repeat(partida.bombonas);
+  const vacias = '●'.repeat(BOMBONAS - partida.bombonas);
+  $('oxigeno').innerHTML = `O₂ ${llenas}<span class="vacia">${vacias}</span>`;
+  $('oxigeno').title = `${partida.bombonas} de ${BOMBONAS} bombonas de oxígeno`;
+}
+
+// ---------- partida ----------
+function nuevaDiaria() {
+  const ids = preguntasDelDia(hoy, PREGUNTAS.length);
+  const guardada = datos.dias[hoy];
+  partida = {
+    modo: 'diaria',
+    ids,
+    preguntas: ids.map((i) => prepararPregunta(PREGUNTAS[i])),
+    res: guardada ? guardada.res : [],
+  };
+  if (!guardada) { datos.dias[hoy] = { res: partida.res, fin: false }; guardar(); }
+}
+
+function nuevaIlimitada() {
+  partida = { modo: 'ilimitado', ids: [], preguntas: [], res: [], bombonas: BOMBONAS };
+}
+
+// En el modo ilimitado las preguntas se generan según hacen falta, en tandas barajadas.
+function pregunta(i) {
+  if (esIlimitado()) {
+    while (partida.ids.length <= i) {
+      let tanda = ordenAleatorio(PREGUNTAS.length);
+      // Evita repetir la última pregunta al empezar una tanda nueva.
+      if (tanda[0] === partida.ids[partida.ids.length - 1]) tanda = [...tanda.slice(1), tanda[0]];
+      partida.ids.push(...tanda);
+    }
+    partida.preguntas[i] ||= prepararPregunta(PREGUNTAS[partida.ids[i]]);
+  }
+  return partida.preguntas[i];
+}
+
+function empezar(modo) {
+  if (modo === 'ilimitado') nuevaIlimitada(); else nuevaDiaria();
+  if (modo === 'diaria' && datos.dias[hoy]?.fin) return pintarFinal();
+  $('modo').hidden = !esIlimitado();
+  $('oxigeno').hidden = !esIlimitado();
+  $('btnTerminar').hidden = !esIlimitado();
+  if (esIlimitado()) pintarOxigeno();
+  fijarProfundidad(metrosPartida(), false);
+  mostrar('vistaJuego');
+  siguientePregunta();
+}
+
+function terminada() {
+  return esIlimitado() ? partida.bombonas <= 0 : partida.res.length >= PREGUNTAS_POR_DIA;
+}
+
+function siguientePregunta() {
+  if (terminada()) return terminar();
+  const i = partida.res.length;
+  const p = pregunta(i);
+  respondida = false;
+  $('numPregunta').textContent = esIlimitado() ? `Pregunta ${i + 1}` : `Pregunta ${i + 1}/${PREGUNTAS_POR_DIA}`;
+  $('pregunta').textContent = p.q;
+  $('resultado').hidden = true;
+  $('formRespuesta').hidden = false;
+  $('aviso').textContent = '';
+  $('entrada').value = '';
+  $('entrada').disabled = false;
+  $('entrada').focus();
+  limite = performance.now() + SEGUNDOS_POR_PREGUNTA * 1000;
+  clearInterval(temporizador);
+  temporizador = setInterval(tic, 100);
+  tic();
+}
+
+function tic() {
+  const resta = Math.max(0, limite - performance.now());
+  const s = Math.ceil(resta / 1000);
+  $('segundos').textContent = s;
+  $('barraTiempo').style.transform = `scaleX(${resta / (SEGUNDOS_POR_PREGUNTA * 1000)})`;
+  $('barraTiempo').classList.toggle('urgente', s <= 5);
+  if (resta <= 0) {
+    clearInterval(temporizador);
+    // Si al acabarse el tiempo hay algo válido escrito, cuenta.
+    const hit = puntuar(pregunta(partida.res.length), $('entrada').value);
+    registrar(hit, $('entrada').value, true);
+  }
+}
+
+function registrar(hit, escrito, porTiempo = false) {
+  if (respondida) return;
+  respondida = true;
+  clearInterval(temporizador);
+  const zona = hit ? ZONAS[hit.zona] : FALLO;
+  const r = { resp: hit ? hit.texto : (escrito.trim() || '—'), zona: hit ? hit.zona : -1, metros: zona.metros, emoji: zona.emoji };
+  partida.res.push(r);
+  if (!hit && esIlimitado()) { partida.bombonas--; pintarOxigeno(); }
+  if (!esIlimitado()) guardar();
+
+  $('formRespuesta').hidden = true;
+  $('entrada').disabled = true;
+  $('aviso').textContent = '';
+  const res = $('resultado');
+  res.className = `resultado z-${zona.id}`;
+  $('resEmoji').textContent = zona.emoji;
+  $('resZona').textContent = hit ? zona.nombre : (porTiempo ? '¡Se acabó el tiempo!' : zona.nombre);
+  let detalle = hit
+    ? (hit.zona === 4 ? `«${hit.texto}» es la respuesta perfecta` : `«${hit.texto}»`)
+    : 'Te quedaste en el mismo sitio';
+  if (!hit && esIlimitado()) {
+    detalle = partida.bombonas > 0
+      ? `Gastaste una bombona: te ${partida.bombonas === 1 ? 'queda 1' : `quedan ${partida.bombonas}`}`
+      : 'Te quedaste sin oxígeno';
+  }
+  $('resDetalle').textContent = detalle;
+  $('resMetros').textContent = `+${zona.metros} m`;
+  $('btnSiguiente').textContent = terminada() ? 'Ver resultado' : 'Seguir bajando ↓';
+  res.hidden = false;
+  if (hit?.zona === 4) res.classList.add('brillo');
+  fijarProfundidad(metrosPartida());
+  setTimeout(() => $('btnSiguiente').focus(), 50);
+}
+
+function responder(e) {
+  e.preventDefault();
+  if (respondida) return;
+  const escrito = $('entrada').value;
+  if (!escrito.trim()) return;
+  const hit = puntuar(pregunta(partida.res.length), escrito);
+  if (!hit) {
+    $('aviso').textContent = `«${escrito.trim()}» no está en el registro. Prueba otra.`;
+    $('formRespuesta').classList.remove('sacudir');
+    void $('formRespuesta').offsetWidth;
+    $('formRespuesta').classList.add('sacudir');
+    $('entrada').select();
+    return;
+  }
+  registrar(hit, escrito);
+}
+
+let nuevoRecord = false;
+function terminar() {
+  clearInterval(temporizador);
+  nuevoRecord = false;
+  if (esIlimitado()) {
+    // Si sale a la superficie a mitad de pregunta, esa pregunta no cuenta.
+    const s = datos.ilimitado;
+    const metros = metrosPartida();
+    s.partidas++;
+    if (metros > s.record) { s.record = metros; nuevoRecord = metros > 0; }
+    s.maxPreguntas = Math.max(s.maxPreguntas, partida.res.length);
+  } else {
+    datos.dias[hoy].fin = true;
+  }
+  guardar();
+  pintarFinal();
+}
+
+function pintarFinal() {
+  const ilimitado = esIlimitado();
+  const metros = metrosPartida();
+  const perlas = partida.res.filter((r) => r.zona === 4).length;
+  fijarProfundidad(metros, false);
+  const textoPerlas = `${perlas} ${perlas === 1 ? 'perla' : 'perlas'} 💎`;
+  if (ilimitado) {
+    const n = partida.res.length;
+    $('finSub').textContent = 'Modo ilimitado ♾️';
+    $('finTitulo').textContent = nuevoRecord ? `¡Nuevo récord! ${metros} m 🏆` : `${metros} m de profundidad`;
+    $('finTexto').textContent = `${n} ${n === 1 ? 'pregunta' : 'preguntas'} · ${textoPerlas} · Récord: ${datos.ilimitado.record} m`;
+  } else {
+    $('finSub').textContent = `Inmersión #${numero}`;
+    $('finTitulo').textContent = metros >= PROFUNDIDAD_FONDO ? '¡Tocaste el fondo! 🏆' : `${metros} m de profundidad`;
+    $('finTexto').textContent = `${mensajeFinal(metros)} · ${textoPerlas}`;
+  }
+  $('resumen').innerHTML = partida.res.map((r, i) => {
+    const p = pregunta(i);
+    const z = r.zona >= 0 ? ZONAS[r.zona] : FALLO;
+    return `<li class="z-${z.id}">
+      <div class="r-preg">${esc(p.q)}</div>
+      <div class="r-resp"><span>${z.emoji}</span> ${esc(r.resp)} <em>+${r.metros} m</em></div>
+      <div class="r-perla">💎 ${esc(p.perla)}</div>
+    </li>`;
+  }).join('');
+  $('btnCompartir').hidden = false;
+  $('btnIlimitadoFin').textContent = ilimitado ? 'Jugar otra vez ♾️' : 'Modo ilimitado ♾️';
+  $('btnDiaria').hidden = !ilimitado;
+  $('btnDiaria').textContent = datos.dias[hoy]?.fin ? 'Ver la del día' : 'Inmersión del día';
+  mostrar('vistaFinal');
+  cuentaAtras();
+}
+
+function mensajeFinal(m) {
+  if (m >= 1000) return 'Alcanzaste el fondo marino con siete perlas perfectas';
+  if (m >= 800) return 'Ya ves el lecho marino desde aquí';
+  if (m >= 570) return 'Las criaturas abisales te saludan';
+  if (m >= 360) return 'Ya no llega la luz del sol';
+  if (m >= 170) return 'Bajaste un buen trecho';
+  return 'Aún se ve la superficie';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+let intervaloProxima = null;
+function cuentaAtras() {
+  clearInterval(intervaloProxima);
+  const pintar = () => {
+    const ahora = new Date();
+    const manana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
+    const s = Math.max(0, Math.floor((manana - ahora) / 1000));
+    if (s === 0 && claveDia() !== hoy) { location.reload(); return; }
+    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    $('proxima').textContent = datos.dias[hoy]?.fin
+      ? `Próxima inmersión del día en ${hh}:${mm}:${ss}`
+      : 'La inmersión de hoy aún te espera';
+  };
+  pintar();
+  intervaloProxima = setInterval(pintar, 1000);
+}
+
+function textoResultado() {
+  if (esIlimitado()) {
+    const fila = partida.res.map((r) => r.emoji).join('');
+    return `🤿 ABYSS ♾️ · ${metrosPartida()} m en ${partida.res.length} preguntas\n${fila}`;
+  }
+  return textoCompartir(numero, partida.res);
+}
+
+async function compartir() {
+  const enlace = EN_ARTEFACTO ? '' : '\n' + location.href.split('#')[0];
+  const texto = textoResultado() + enlace;
+  if (!EN_ARTEFACTO && navigator.share && matchMedia('(pointer: coarse)').matches) {
+    try { await navigator.share({ text: texto }); return; } catch (e) { if (e?.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(texto);
+    toast('Resultado copiado 📋');
+  } catch {
+    // Sin portapapeles (p. ej. dentro de un artefacto): se muestra para copiarlo a mano.
+    $('textoCompartir').value = texto;
+    $('dlgCompartir').showModal();
+    $('textoCompartir').select();
+  }
+}
+
+// ---------- estadísticas ----------
+function estadisticas() {
+  const dias = Object.entries(datos.dias).filter(([, d]) => d.fin).map(([k, d]) => [k, profundidad(d.res), d.res]);
+  const jugadas = dias.length;
+  const mejor = Math.max(0, ...dias.map((d) => d[1]));
+  const media = jugadas ? Math.round(dias.reduce((s, d) => s + d[1], 0) / jugadas) : 0;
+  const perlas = dias.reduce((s, d) => s + d[2].filter((r) => r.zona === 4).length, 0);
+  const fondos = dias.filter((d) => d[1] >= PROFUNDIDAD_FONDO).length;
+  // Racha: días seguidos jugados hasta hoy (o hasta ayer si hoy aún no se jugó).
+  const hechos = new Set(dias.map((d) => d[0]));
+  let racha = 0;
+  const f = new Date();
+  if (!hechos.has(claveDia(f))) f.setDate(f.getDate() - 1);
+  while (hechos.has(claveDia(f))) { racha++; f.setDate(f.getDate() - 1); }
+  const il = datos.ilimitado;
+  const celda = (v, t) => `<div><strong>${v}</strong><span>${t}</span></div>`;
+  $('stats').innerHTML = '<h3>Inmersión del día</h3>'
+    + celda(jugadas, 'inmersiones') + celda(racha, 'racha') + celda(`${mejor} m`, 'récord')
+    + celda(`${media} m`, 'media') + celda(perlas, 'perlas 💎') + celda(fondos, 'fondos 🏆')
+    + '<h3>Modo ilimitado ♾️</h3>'
+    + celda(il.partidas, 'partidas') + celda(`${il.record} m`, 'récord') + celda(il.maxPreguntas, 'máx. preguntas');
+  $('dlgStats').showModal();
+}
+
+// ---------- burbujas decorativas ----------
+function burbujas() {
+  const cont = document.querySelector('.burbujas');
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('i');
+    const t = 4 + Math.random() * 8;
+    b.style.cssText = `left:${Math.random() * 100}%;width:${t}px;height:${t}px;animation-duration:${8 + Math.random() * 10}s;animation-delay:-${Math.random() * 18}s`;
+    cont.appendChild(b);
+  }
+}
+
+// ---------- arranque ----------
+tablaZonas($('tablaZonas'));
+tablaZonas($('tablaZonas2'));
+burbujas();
+$('numInmersion').textContent = `Inmersión #${numero}`;
+fijarProfundidad(0, false);
+
+$('btnEmpezar').addEventListener('click', () => empezar('diaria'));
+$('btnIlimitado').addEventListener('click', () => empezar('ilimitado'));
+$('btnIlimitadoFin').addEventListener('click', () => empezar('ilimitado'));
+$('btnDiaria').addEventListener('click', () => empezar('diaria'));
+$('btnTerminar').addEventListener('click', terminar);
+$('formRespuesta').addEventListener('submit', responder);
+$('btnSiguiente').addEventListener('click', siguientePregunta);
+$('btnCompartir').addEventListener('click', compartir);
+$('btnAyuda').addEventListener('click', () => $('dlgAyuda').showModal());
+$('btnStats').addEventListener('click', estadisticas);
+
+const deHoy = datos.dias[hoy];
+if (deHoy?.fin) {
+  $('btnEmpezar').textContent = 'Ver la inmersión de hoy ✅';
+} else if (deHoy && deHoy.res.length) {
+  // Partida a medias: se retoma en la siguiente pregunta.
+  $('btnEmpezar').textContent = `Continuar la del día (pregunta ${deHoy.res.length + 1}/7) 🤿`;
+}
+mostrar('vistaInicio');
+if (!deHoy && !Object.keys(datos.dias).length && !datos.ilimitado.partidas) $('dlgAyuda').showModal();
+
+</script>

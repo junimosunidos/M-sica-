@@ -9,7 +9,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent
 SALIDA = RAIZ / 'dist' / 'abyss-artifact.html'
-MODULOS = ['js/preguntas.js', 'js/motor.js', 'js/juego.js']  # en orden de dependencia
+MODULOS = ['js/preguntas.js', 'js/extras.js', 'js/motor.js', 'js/juego.js']  # en orden de dependencia
 
 
 def js_sin_modulos(texto: str) -> str:

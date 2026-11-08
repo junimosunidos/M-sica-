@@ -1,4 +1,5 @@
 import { PREGUNTAS } from './preguntas.js';
+import { EXTRAS } from './extras.js';
 import {
   ZONAS, FALLO, PROFUNDIDAD_FONDO, PREGUNTAS_POR_DIA, SEGUNDOS_POR_PREGUNTA,
   prepararPregunta, puntuar, profundidad, claveDia, numeroInmersion, preguntasDelDia, ordenAleatorio, textoCompartir,
@@ -105,13 +106,15 @@ function pintarOxigeno() {
 }
 
 // ---------- partida ----------
+const preparar = (i) => prepararPregunta(PREGUNTAS[i], EXTRAS[PREGUNTAS[i].q]);
+
 function nuevaDiaria() {
   const ids = preguntasDelDia(hoy, PREGUNTAS.length);
   const guardada = datos.dias[hoy];
   partida = {
     modo: 'diaria',
     ids,
-    preguntas: ids.map((i) => prepararPregunta(PREGUNTAS[i])),
+    preguntas: ids.map((i) => preparar(i)),
     res: guardada ? guardada.res : [],
   };
   if (!guardada) { datos.dias[hoy] = { res: partida.res, fin: false }; guardar(); }
@@ -130,7 +133,7 @@ function pregunta(i) {
       if (tanda[0] === partida.ids[partida.ids.length - 1]) tanda = [...tanda.slice(1), tanda[0]];
       partida.ids.push(...tanda);
     }
-    partida.preguntas[i] ||= prepararPregunta(PREGUNTAS[partida.ids[i]]);
+    partida.preguntas[i] ||= preparar(partida.ids[i]);
   }
   return partida.preguntas[i];
 }

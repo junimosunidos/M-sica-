@@ -38,14 +38,20 @@ function variantes(lista) {
   return lista.split(',').map((s) => s.trim()).filter(Boolean).map((r) => r.split('|').map((v) => v.trim()));
 }
 
-// Formas singular/plural a probar para una palabra normalizada.
+// Formas singular/plural y masculino/femenino a probar para una palabra normalizada
+// (la propia palabra primero). «Diseñadoras» → diseñadora → diseñador; «juezas» → jueza → juez.
 function formas(w) {
-  const f = [w, w + 's', w + 'es'];
-  if (w.endsWith('es')) f.push(w.slice(0, -2));
-  if (w.endsWith('s')) f.push(w.slice(0, -1));
-  if (w.endsWith('ces')) f.push(w.slice(0, -3) + 'z');
-  if (w.endsWith('z')) f.push(w.slice(0, -1) + 'ces');
-  return f;
+  const bases = [w];
+  if (w.endsWith('es')) bases.push(w.slice(0, -2));
+  if (w.endsWith('s')) bases.push(w.slice(0, -1));
+  if (w.endsWith('ces')) bases.push(w.slice(0, -3) + 'z');
+  const f = [];
+  for (const b of bases) {
+    f.push(b, b + 's', b + 'es');
+    if (b.endsWith('z')) f.push(b.slice(0, -1) + 'ces');
+    if (b.endsWith('a') && b.length > 3) f.push(b.slice(0, -1) + 'o', b.slice(0, -1));
+  }
+  return [...new Set(f)];
 }
 
 function distancia(a, b) {
@@ -64,7 +70,9 @@ function distancia(a, b) {
 }
 
 // Prepara una pregunta: índice de respuestas válidas → { zona, texto mostrado }.
-export function prepararPregunta(p) {
+// `extra` (opcional) son las listas ampliadas de extras.js, con el mismo formato que p.z;
+// nunca pisan a las respuestas manuales ni a la perla, tampoco en plural o femenino.
+export function prepararPregunta(p, extra = null) {
   const indice = new Map();
   const add = (grupo, zona) => {
     const mostrado = grupo[0];
@@ -72,6 +80,13 @@ export function prepararPregunta(p) {
   };
   p.z.forEach((lista, i) => variantes(lista).forEach((g) => add(g, i)));
   add(p.perla.split('|').map((v) => v.trim()), 4);
+  if (extra) {
+    const manuales = new Set(indice.keys());
+    extra.forEach((lista, i) => variantes(lista).forEach((g) => {
+      const libres = g.filter((v) => !formas(normalizar(v)).some((f) => manuales.has(f)));
+      if (libres.length === g.length) add(g, i);
+    }));
+  }
   return { q: p.q, perla: p.perla.split('|')[0], indice };
 }
 

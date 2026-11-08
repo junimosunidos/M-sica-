@@ -55,7 +55,14 @@ y no hay fondo; tienes 3 bombonas de oxígeno y cada pregunta sin respuesta gast
 
 **Como artefacto de Claude**: `abyss/dist/abyss-artifact.html` es el juego entero en un solo archivo, listo para publicarlo
 como artefacto. Si cambias algo en `abyss/`, regenéralo con `python3 abyss/build.py`.
-Las preguntas están en `abyss/js/preguntas.js`: para añadir más, copia una entrada y reparte las respuestas por zonas.
+**Respuestas válidas.** Cada pregunta tiene dos fuentes:
+- `abyss/js/preguntas.js`: las respuestas típicas, puestas a mano en su zona, y la única respuesta de 143 m.
+- `abyss/datos/*.txt`: listas ampliadas (más de 7.000 respuestas; por ejemplo, más de 500 profesiones). Su zona se calcula
+  con la frecuencia real de cada palabra en español según [wordfreq](https://github.com/rspeer/wordfreq)
+  (Wikipedia, subtítulos, noticias, webs y redes sociales): cuanto menos se usa la palabra, más profunda la zona.
+  Tras editar un `.txt`, regenera `abyss/js/extras.js` con `pip install wordfreq && python3 abyss/herramientas/ampliar.py`.
+
+Se aceptan respuestas sin tildes, en singular o plural, en masculino o femenino y con una errata pequeña.
 
 ## Cómo ejecutarla
 
